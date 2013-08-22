@@ -4,8 +4,6 @@ import sys
 import os
 import re
 import urllib2
-import json
-import pdb
 
 def getDownloadPage(url):
     header = {
@@ -17,13 +15,11 @@ def getDownloadPage(url):
     data = urllib2.urlopen(request).read()
     script_pattern = re.compile(r'<script type="text/javascript">(.+?)</script>', re.DOTALL)
     script = re.findall(script_pattern, data)[2]
-    pdb.set_trace()
     return script
 
 def getFileName(data):
     pattern = re.compile(r'var\sserver_filename="(.+?)"')
     filename = re.search(pattern, data).group(1)
-    pdb.set_trace()
     return filename
 
 def getDownloadLink(data):
@@ -42,7 +38,7 @@ def main(urls):
         filename = getFileName(script)
         link = getDownloadLink(script)
         download(link, filename)
-        print "%s complete" % filename
+        print "%s complete\n" % filename
     sys.exit()
 
 if __name__ == '__main__':
@@ -52,7 +48,7 @@ if __name__ == '__main__':
     if sys.argv[1].startswith('--'):
         option = sys.argv[1][2:]
         if option == 'version':
-            print 'V0.2'
+            print 'V0.3'
         elif option == 'help':
             print '''\
                 Default aria2c -c -s5 -x5
