@@ -24,21 +24,23 @@ def getFileName(data):
 
 def getDownloadLink(data):
     pattern = re.compile(r'dlink\\.+?(http.+?)\\"')
-    link = re.search(pattern, data).group(1).replace('\\', '')
+    link = re.findall(pattern, data)[-1].replace('\\', '')
     return link
 
-def download(link, filename):
-    cmd = "aria2c -c -o '%s' -s5 -x5 '%s'" % (filename, link)
+def download(link, filename, limit=None):
+    if limit:
+        cmd = "aria2c -c -o '%s' -s5 -x5 %s '%s'" % (filename, limit, link)
+    else:
+        cmd = "aria2c -c -o '%s' -s5 -x5 '%s'" % (filename, link)
     os.system(cmd)
 
 
-def main(urls):
+def main(urls, limit=None):
     for url in urls:
         script = getDownloadPage(url)
         filename = getFileName(script)
         link = getDownloadLink(script)
-        download(link, filename)
-        print "%s complete\n" % filename
+        download(link, filename, limit)
     sys.exit()
 
 if __name__ == '__main__':
@@ -48,12 +50,15 @@ if __name__ == '__main__':
     if sys.argv[1].startswith('--'):
         option = sys.argv[1][2:]
         if option == 'version':
-            print 'V0.3'
+            print 'V0.4'
         elif option == 'help':
             print '''\
                 Default aria2c -c -s5 -x5
               --version: Print the version
-              --help   : Display this help'''
+              --help   : Display this help
+              --max-download-limit=XXk|XXm: Limit max download speed to XX kb or XX mb'''
+        elif re.match(r'--max-download-limit=\d+k', sys.argv[1]):
+            main(sys.argv[2:], sys.argv[1])
         else:
             print 'Unknow option'
         sys.exit()
