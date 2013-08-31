@@ -23,8 +23,8 @@ def getFileName(data):
     return filename
 
 def getDownloadLink(data):
-    pattern = re.compile(r'dlink\\.+?(http.+?)\\"')
-    link = re.findall(pattern, data)[-1].replace('\\', '')
+    pattern = re.compile(r'\\"dlink\\":\\"(.*?&sh=1)')
+    link = re.search(pattern, data).group(1).replace('\\', '')
     return link
 
 def download(link, filename, limit=None):
