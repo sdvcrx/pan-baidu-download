@@ -3,6 +3,7 @@
 
 import sys
 import os
+import json
 
 from bddown_help import *
 from bddown_class import BaiduDown
@@ -10,7 +11,7 @@ from bddown_class import BaiduDown
 
 def execute_command(args=sys.argv[1:]):
     if not args:
-        usage()
+        print usage()
         sys.exit(1)
 
     command = args[0]
@@ -58,6 +59,12 @@ def show(links):
     sys.exit(0)
 
 
-def config():
-    fp = open()
+def config(argv):
+    configure = json.load(file('config.json'))
+    for i in configure:
+        print "%-10s: %s" % (i, configure[i])
+    sys.exit(0)
 
+
+if __name__ == '__main__':
+    execute_command()

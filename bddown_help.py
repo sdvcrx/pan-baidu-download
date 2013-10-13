@@ -10,6 +10,7 @@ basic_command = [
 
 extended_usage = ''
 
+
 def join_commands(command):
     n = max(len(x[0]) for x in command)
     n = max(n, 10)
@@ -23,14 +24,14 @@ Basic commands:
 
 def usage():
     return basic_usage + '''
-    Use python bddown_cli.py help for details
-    Use python bddown_cli.py help <command> for more information on a specific command.
-    Check https://github.com/banbanchs/pan-baidu-download for details'''
+Use python bddown_cli.py help for details
+Use python bddown_cli.py help <command> for more information on a specific command.
+Check https://github.com/banbanchs/pan-baidu-download for details'''
 
 
 def show_help():
     return ''' Python script for Baidu pan
-    Basic usage:
+     Basic usage:
     ''' + basic_usage + extended_usage + '\n'
 
 command_help = {
