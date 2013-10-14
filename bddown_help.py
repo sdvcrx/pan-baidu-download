@@ -35,16 +35,27 @@ def show_help():
     ''' + basic_usage + extended_usage + '\n'
 
 command_help = {
-    'download': '''python bddown_cli.py download [options] [Baidupan-url]
-    Download file from the Baidu pan link
+    'download': '''python bddown_cli.py download [options] [Baidupan-url]...
+
+Download file from the Baidu pan link
+
+Options:
     --limit=[speed]             Max download speed limit.
     --output-dir=[dir]          Download task to dir.''',
 
-    'show': '''python bddown_cli.py show [Baidupan-url]
-    Show the real download link and filename''',
+    'show': '''python bddown_cli.py show [Baidupan-url]...
 
-    'config': '''python bddown_cli.py config [command]
-    save configuration to file
+Show the real download link and filename
+
+Example:
+python bddown_cli.py show http://pan.baidu.com/s/15lliC
+''',
+
+    'config': '''python bddown_cli.py config [command]...
+
+save configuration to file
+
+Options:
     --limit=[speed]             Max download speed limit.
     --output-dir=[dir]          Download task to dir.'''
 }

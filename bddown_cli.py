@@ -6,7 +6,7 @@ import os
 import json
 
 from bddown_help import *
-from bddown_class import BaiduDown
+from bddown_core import BaiduDown
 
 
 def execute_command(args=sys.argv[1:]):
@@ -53,17 +53,24 @@ def download(links, limit=None):
 
 
 def show(links):
+    if not len(links):
+        print command_help['show']
     for link in links:
         bd = BaiduDown(link)
-        print bd.filename, '\n', bd.link
+        print bd.filename, '\n', bd.link, '\n'
     sys.exit(0)
 
 
 def config(argv):
-    configure = json.load(file('config.json'))
-    for i in configure:
-        print "%-10s: %s" % (i, configure[i])
-    sys.exit(0)
+    try:
+        configure = json.load(file('config.json'))
+        for i in configure:
+            print "%-10s: %s" % (i, configure[i])
+        sys.exit(0)
+    except IOError, e:
+        print sys.stderr >> "config.json不存在"
+        print sys.stderr >> "Exception: %s" % str(e)
+        sys.exit(1)
 
 
 if __name__ == '__main__':

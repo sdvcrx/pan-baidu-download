@@ -9,20 +9,20 @@ class BaiduDown(object):
 
     def __init__(self, bdlink):
         self.bdlink = bdlink
-        self.data = self._getDownloadPage()
-        self.filename, self.link = self._getFilenameAndLink()
+        self.data = self._get_download_page()
+        self.filename, self.link = self._get_filename_and_link()
 
     def __repr__(self):
         return "<filename> ==> %s\n<download link> ==> %s" % (self.filename, self.link)
 
-    def _getFilenameAndLink(self):
+    def _get_filename_and_link(self):
         file_pattern = re.compile(r'var\sserver_filename="(.+?)"')
         filename = re.search(file_pattern, self.data).group(1)
         link_pattern = re.compile(r'\\"dlink\\":\\"(.*?&sh=1)')
         link = re.search(link_pattern, self.data).group(1).replace('\\', '')
         return (filename, link)
 
-    def _getDownloadPage(self):
+    def _get_download_page(self):
         header = {
             'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64)\
                     AppleWebKit/537.36 (KHTML, like Gecko)\
