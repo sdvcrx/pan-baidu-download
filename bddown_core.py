@@ -6,6 +6,7 @@ import re
 import sys
 import os
 import json
+import pdb
 
 from bddown_help import command_help
 
@@ -43,7 +44,8 @@ class BaiduDown(object):
 def download(links, limit=None):
     for link in links:
         bd = BaiduDown(link)
-        if not limit:
+        pdb.set_trace()
+        if limit:
             cmd = "aria2c -c -o '%s' -s5 -x5 %s '%s'" % (bd.filename, limit, bd.link)
         else:
             cmd = "aria2c -c -o '%s' -s5 -x5 '%s'" % (bd.filename, bd.link)
@@ -73,4 +75,4 @@ def config(argv):
 
 
 if '__main__' == __name__:
-   pass
+    pass
