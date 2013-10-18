@@ -7,6 +7,7 @@ import sys
 import os
 import json
 from collections import deque
+from sets import Set
 
 from bddown_help import command_help
 
@@ -16,17 +17,19 @@ class BaiduDown(object):
     def __init__(self, raw_link):
         self.bdlink = raw_link
         self.data = self._get_download_page()
-        self.filename, self.link = self._get_filename_and_link()
+        self.filename, self.links = self._get_filename_and_link()
 
     def __repr__(self):
-        return "<filename> ==> %s\n<download link> ==> %s" % (self.filename, self.link)
+        return "<filename> ==> %s\n<download link> ==> %s" % (self.filename, self.links)
 
     def _get_filename_and_link(self):
-        file_pattern = re.compile(r'var\sserver_filename="(.+?)"')
-        filename = re.search(file_pattern, self.data).group(1)
+        file_pattern = re.compile(r'server_filename\\":\\"(.+?)\\"')
+        filename = re.findall(file_pattern, self.data)
+        filename = [fn.replace("\\\\", "\\").decode("unicode_escape").encode("utf-8") for fn in filename]
         link_pattern = re.compile(r'\\"dlink\\":\\"(.*?&sh=1)')
-        link = re.search(link_pattern, self.data).group(1).replace('\\', '')
-        return filename, link
+        links = re.findall(link_pattern, self.data)
+        links = [link.replace("\\", "") for link in links]
+        return uniqify_list(filename), uniqify_list(links)
 
     def _get_download_page(self):
         header = {
@@ -36,9 +39,7 @@ class BaiduDown(object):
         }
         request = urllib2.Request(url=self.bdlink, headers=header)
         data = urllib2.urlopen(request).read()
-        script_pattern = re.compile(r'<script type="text/javascript">(.+?)</script>', re.DOTALL)
-        script = re.findall(script_pattern, data)[2]
-        return script
+        return data
 
 
 def generate_download_queue(links):
@@ -46,7 +47,7 @@ def generate_download_queue(links):
     filename_queue = deque()
     for link in links:
         bd = BaiduDown(link)
-        link_queue.extend(bd.link)
+        link_queue.extend(bd.links)
         filename_queue.extend(bd.filename)
 
     download_queue = deque(zip(filename_queue, link_queue))
@@ -58,6 +59,13 @@ def generate_download_queue(links):
             break
         else:
             download(link, filename)
+
+    sys.exit(0)
+
+
+def uniqify_list(seq):
+    seen = Set()
+    return [x for x in seq if x not in seen and not seen.add(x)]
 
 
 def download(link, filename, limit=None):
@@ -73,7 +81,7 @@ def show(links):
         print command_help['show']
     for link in links:
         bd = BaiduDown(link)
-        print bd.filename, '\n', bd.link, '\n'
+        print bd.filename, '\n', bd.links, '\n'
     sys.exit(0)
 
 
