@@ -6,7 +6,7 @@ import re
 import sys
 import os
 import json
-import pdb
+from collections import deque
 
 from bddown_help import command_help
 
@@ -41,16 +41,31 @@ class BaiduDown(object):
         return script
 
 
-def download(links, limit=None):
+def generate_download_queue(links):
+    link_queue = deque()
+    filename_queue = deque()
     for link in links:
         bd = BaiduDown(link)
-        pdb.set_trace()
-        if limit:
-            cmd = "aria2c -c -o '%s' -s5 -x5 %s '%s'" % (bd.filename, limit, bd.link)
+        link_queue.extend(bd.link)
+        filename_queue.extend(bd.filename)
+
+    download_queue = deque(zip(filename_queue, link_queue))
+    while True:
+        try:
+            filename, link = download_queue.pop()
+        except IndexError:
+            print "Download Complete!"
+            break
         else:
-            cmd = "aria2c -c -o '%s' -s5 -x5 '%s'" % (bd.filename, bd.link)
-        os.system(cmd)
-    sys.exit(0)
+            download(link, filename)
+
+
+def download(link, filename, limit=None):
+    if limit:
+        cmd = "aria2c -c -o '%s' -s5 -x5 %s '%s'" % (filename, limit, link)
+    else:
+        cmd = "aria2c -c -o '%s' -s5 -x5 '%s'" % (filename, link)
+    os.system(cmd)
 
 
 def show(links):

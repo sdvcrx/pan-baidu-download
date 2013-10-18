@@ -4,7 +4,7 @@
 import sys
 
 from bddown_help import *
-from bddown_core import download, show, config
+from bddown_core import generate_download_queue, show, config
 
 
 def execute_command(args=sys.argv[1:]):
@@ -25,7 +25,7 @@ def execute_command(args=sys.argv[1:]):
 
     commands = {
         'help':         show_help,
-        'download':     download,
+        'download':     generate_download_queue,
         'show':         show,
         'config':       config
     }
@@ -35,6 +35,7 @@ def execute_command(args=sys.argv[1:]):
         sys.exit(1)
     elif '-h' in args or '--help' in args:
         print command_help[args[0]]
+        sys.exit(0)
     else:
         commands[command](args[1:])
 
