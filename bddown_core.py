@@ -53,7 +53,7 @@ def generate_download_queue(links):
     download_queue = deque(zip(filename_queue, link_queue))
     while True:
         try:
-            filename, link = download_queue.pop()
+            filename, link = download_queue.popleft()
         except IndexError:
             print "Download Complete!"
             break
