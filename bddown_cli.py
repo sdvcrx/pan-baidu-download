@@ -15,7 +15,7 @@ def execute_command(args=sys.argv[1:]):
     command = args[0]
     if command.startswith('-'):
         if command in ('-h', '--help'):
-            print show_help()
+            show_help(args)
         elif command in ('-V', '-v', '--version'):
             print 'V1.01'
         else:

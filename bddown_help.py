@@ -29,8 +29,8 @@ Use python bddown_cli.py help <command> for more information on a specific comma
 Check https://github.com/banbanchs/pan-baidu-download for details'''
 
 
-def show_help():
-    return ''' Python script for Baidu pan
+def show_help(args):
+    print ''' Python script for Baidu pan
      Basic usage:
     ''' + basic_usage + extended_usage + '\n'
 
