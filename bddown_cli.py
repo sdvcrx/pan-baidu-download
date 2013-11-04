@@ -3,7 +3,9 @@
 
 import sys
 
-from bddown_help import *
+#from bddown_help import *
+import bddown_help
+from util import *
 from bddown_core import generate_download_queue, show, config
 
 
@@ -15,16 +17,16 @@ def execute_command(args=sys.argv[1:]):
     command = args[0]
     if command.startswith('-'):
         if command in ('-h', '--help'):
-            show_help(args)
+            usage(bddown_help.show_help())
         elif command in ('-V', '-v', '--version'):
-            print 'V1.01'
+            print 'V1.54'
         else:
             usage()
             sys.exit(1)
         sys.exit(0)
 
     commands = {
-        'help':         show_help,
+        'help':         bd_help,
         'download':     generate_download_queue,
         'show':         show,
         'config':       config
@@ -34,7 +36,7 @@ def execute_command(args=sys.argv[1:]):
         usage()
         sys.exit(1)
     elif '-h' in args or '--help' in args:
-        print command_help[args[0]]
+        bd_help([command])
         sys.exit(0)
     else:
         commands[command](args[1:])

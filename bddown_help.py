@@ -29,33 +29,40 @@ Use python bddown_cli.py help <command> for more information on a specific comma
 Check https://github.com/banbanchs/pan-baidu-download for details'''
 
 
-def show_help(args):
-    print ''' Python script for Baidu pan
-     Basic usage:
+def show_help():
+    return ''' Python script for Baidu pan
+Basic usage:
     ''' + basic_usage + extended_usage + '\n'
 
-command_help = {
-    'download': '''python bddown_cli.py download [options] [Baidupan-url]...
+
+download = '''python bddown_cli.py download [options] [Baidupan-url]...
 
 Download file from the Baidu pan link
 
 Options:
     --limit=[speed]             Max download speed limit.
-    --output-dir=[dir]          Download task to dir.''',
+    --output-dir=[dir]          Download task to dir.'''
 
-    'show': '''python bddown_cli.py show [Baidupan-url]...
+show = '''python bddown_cli.py show [Baidupan-url]...
 
 Show the real download link and filename
 
 Example:
 python bddown_cli.py show http://pan.baidu.com/s/15lliC
-''',
+'''
 
-    'config': '''python bddown_cli.py config [command]...
+config = '''python bddown_cli.py config [command]...
 
 save configuration to file
 
 Options:
     --limit=[speed]             Max download speed limit.
     --output-dir=[dir]          Download task to dir.'''
-}
+
+help_help = '''Get helps:
+ python lixian_cli.py help help
+ python lixian_cli.py help examples
+ python lixian_cli.py help readme
+ python lixian_cli.py help <command>'''
+
+help = help_help
