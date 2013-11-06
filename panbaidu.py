@@ -4,6 +4,7 @@ import sys
 import os
 import re
 import urllib2
+import pdb
 
 def getDownloadPage(url):
     header = {
@@ -23,8 +24,10 @@ def getFileName(data):
     return filename
 
 def getDownloadLink(data):
-    pattern = re.compile(r'\\"dlink\\":\\"(.*?&sh=1)')
-    link = re.search(pattern, data).group(1).replace('\\', '')
+    #pattern = re.compile(r'\\"dlink\\":\\"(.*?&sh=1)')
+    pattern = re.compile(r';;_dlink="(.+?)";')
+    link = re.search(pattern, data).group(1)
+    pdb.set_trace()
     return link
 
 def download(link, filename, limit=None):
