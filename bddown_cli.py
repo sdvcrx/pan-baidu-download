@@ -6,7 +6,7 @@ import sys
 #from bddown_help import *
 import bddown_help
 from util import *
-from bddown_core import generate_download_queue, show, config
+from bddown_core import download, show, config
 
 
 def execute_command(args=sys.argv[1:]):
@@ -27,7 +27,7 @@ def execute_command(args=sys.argv[1:]):
 
     commands = {
         'help':         bd_help,
-        'download':     generate_download_queue,
+        'download':     download,
         'show':         show,
         'config':       config
     }

@@ -9,7 +9,7 @@ import json
 from collections import deque
 from sets import Set
 
-from bddown_help import command_help
+from util import bd_help
 
 
 class BaiduDown(object):
@@ -42,25 +42,19 @@ class BaiduDown(object):
         return data
 
 
+    #@property
+    #def queue(self):
+    #    download_queue = deque()
+    #    download_queue.extend(zip(self.filename, self.links))
+    #    return download_queue
+
+
 def generate_download_queue(links):
-    link_queue = deque()
-    filename_queue = deque()
+    download_queue = deque()
     for link in links:
         bd = BaiduDown(link)
-        link_queue.extend(bd.links)
-        filename_queue.extend(bd.filename)
-
-    download_queue = deque(zip(filename_queue, link_queue))
-    while True:
-        try:
-            filename, link = download_queue.popleft()
-        except IndexError:
-            print "Download Complete!"
-            break
-        else:
-            download(link, filename)
-
-    sys.exit(0)
+        download_queue.extend(zip(bd.filename, bd.links))
+    return download_queue
 
 
 def uniqify_list(seq):
@@ -68,20 +62,37 @@ def uniqify_list(seq):
     return [x for x in seq if x not in seen and not seen.add(x)]
 
 
-def download(link, filename, limit=None):
-    if limit:
-        cmd = "aria2c -c -o '%s' -s5 -x5 %s '%s'" % (filename, limit, link)
-    else:
-        cmd = "aria2c -c -o '%s' -s5 -x5 '%s'" % (filename, link)
+def download(links, limit=None, output_dir=None):
+    queue = generate_download_queue(links)
+    while True:
+        try:
+            filename, link = queue.popleft()
+        except IndexError:
+            break
+        else:
+            download_command(filename, link)
+
+    sys.exit(0)
+
+
+def download_command(filename, link, limit=None, output_dir=None):
+    convert_none = lambda s: s or ""
+    cmd = "aria2c -c -o '%s' -s5 -x5 %s %s '%s'" % (filename, convert_none(limit), convert_none(output_dir), link)
     os.system(cmd)
 
 
 def show(links):
     if not len(links):
-        print command_help['show']
-    for link in links:
-        bd = BaiduDown(link)
-        print bd.filename, '\n', bd.links, '\n'
+        bd_help(show)
+    else:
+        queue = generate_download_queue(links)
+        while True:
+            try:
+                filename, link = queue.popleft()
+            except IndexError:
+                break
+            else:
+                print "%s\n%s\n\n" % (filename, link)
     sys.exit(0)
 
 
