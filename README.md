@@ -18,7 +18,7 @@ pan-baidu-download
 
 - 最大下载速度限制
 
-- 多线程（默认为5）：基本可以达到宽带的满速
+- 多线程（默认为5）
 
 - 单页面多文件下载（部分链接可能无效）
 
@@ -28,11 +28,23 @@ pan-baidu-download
 
 下载
 
+```
+python bddown_cli.py download [options] [Baidupan-url]...
+
+Options:
+    --limit=[speed]             Max download speed limit.
+    --output-dir=[dir]          Download task to dir.
+```
+
     python bddown_cli.py download pan-baidu-url
 
 限速 `NUM kb` 下载
 
-    python bddown_cli.py download pan-baidu-url --limit=500k
+    python bddown_cli.py --limit=500k download pan-baidu-url ...
+
+指定下载目录
+
+    python bddown_cli.py --output-dir=/home/memory/Downloads pan-baidu-url ...
 
 下载多个链接
 
@@ -48,6 +60,12 @@ pan-baidu-download
 
     python bddown_cli.py show pan-baidu-url ...
 
+帮助
+
+    python bddown_cli.py -h
+    python bddown_cli.py help [download|show|help]
+
+**config功能暂未完成**
 
 ## 使用指南
 
@@ -80,6 +98,10 @@ $ date -I
 
 - ~~指定下载目录~~
 
+- 导出aria2下载链接
+
+- 配置文件支持
+
 - 编码完善
 
 - Windows7支持
@@ -96,9 +118,12 @@ $ date -I
 
 - more
 
+**此文档未完成**
+
 ## 感谢
 
 [迅雷离线下载脚本 iambus/xunlei-lixian](https://github.com/iambus/xunlei-lixian)
+有很多代码参(chao)考(xi)了`xunlei-lixian`，在此再次对作者表示感谢
 
 [榨干百度网盘计划 xuanqinanhai/bleed-baidu-white](https://github.com/xuanqinanhai/bleed-baidu-white)
 
