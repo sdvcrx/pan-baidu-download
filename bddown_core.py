@@ -105,15 +105,16 @@ def show(links):
 
 
 def config(argv):
-    try:
-        configure = json.load(file('config.json'))
-        for i in configure:
-            print "%-10s: %s" % (i, configure[i])
-        sys.exit(0)
-    except IOError, e:
-        print sys.stderr >> "config.json不存在"
-        print sys.stderr >> "Exception: %s" % str(e)
-        sys.exit(1)
+	pass
+    # try:
+    #     configure = json.load(file('config.json'))
+    #     for i in configure:
+    #         print "%-10s: %s" % (i, configure[i])
+    #     sys.exit(0)
+    # except IOError, e:
+    #     print sys.stderr >> "config.json不存在"
+    #     print sys.stderr >> "Exception: %s" % str(e)
+    #     sys.exit(1)
 
 
 if '__main__' == __name__:
