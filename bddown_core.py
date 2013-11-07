@@ -8,6 +8,8 @@ import os
 import json
 from collections import deque
 from sets import Set
+import getopt
+import pdb
 
 from util import bd_help
 
@@ -17,19 +19,9 @@ class BaiduDown(object):
     def __init__(self, raw_link):
         self.bdlink = raw_link
         self.data = self._get_download_page()
-        self.filename, self.links = self._get_filename_and_link()
 
     def __repr__(self):
         return "<filename> ==> %s\n<download link> ==> %s" % (self.filename, self.links)
-
-    def _get_filename_and_link(self):
-        file_pattern = re.compile(r'server_filename\\":\\"(.+?)\\"')
-        filename = re.findall(file_pattern, self.data)
-        filename = [fn.replace("\\\\", "\\").decode("unicode_escape").encode("utf-8") for fn in filename]
-        link_pattern = re.compile(r'\\"dlink\\":\\"(.*?&sh=1)')
-        links = re.findall(link_pattern, self.data)
-        links = [link.replace("\\", "") for link in links]
-        return uniqify_list(filename), uniqify_list(links)
 
     def _get_download_page(self):
         header = {
@@ -41,12 +33,18 @@ class BaiduDown(object):
         data = urllib2.urlopen(request).read()
         return data
 
+    @property
+    def links(self):
+        link_pattern = re.compile(r';;_dlink="(.+?)";')
+        links = re.findall(link_pattern, self.data)
+        return uniqify_list(links)
 
-    #@property
-    #def queue(self):
-    #    download_queue = deque()
-    #    download_queue.extend(zip(self.filename, self.links))
-    #    return download_queue
+    @property
+    def filename(self):
+        file_pattern = re.compile(r'server_filename\\":\\"(.+?)\\"')
+        filename = re.findall(file_pattern, self.data)
+        filename = [fn.replace("\\\\", "\\").decode("unicode_escape").encode("utf-8") for fn in filename]
+        return filename
 
 
 def generate_download_queue(links):
@@ -62,7 +60,15 @@ def uniqify_list(seq):
     return [x for x in seq if x not in seen and not seen.add(x)]
 
 
-def download(links, limit=None, output_dir=None):
+def download(args):
+    optlist, links = getopt.getopt(args, 'lD', ['limit=', 'dir='])
+    limit = None
+    output_dir = None
+    for k, v in optlist:
+        if k == '--limit':
+            limit = v
+        elif k == '--dir':
+            output_dir = v
     queue = generate_download_queue(links)
     while True:
         try:
@@ -70,14 +76,16 @@ def download(links, limit=None, output_dir=None):
         except IndexError:
             break
         else:
-            download_command(filename, link)
+            download_command(filename, link, limit=limit, output_dir=output_dir)
 
     sys.exit(0)
 
 
 def download_command(filename, link, limit=None, output_dir=None):
-    convert_none = lambda s: s or ""
-    cmd = "aria2c -c -o '%s' -s5 -x5 %s %s '%s'" % (filename, convert_none(limit), convert_none(output_dir), link)
+    convert_none = lambda opt, arg: opt + arg if arg else ""
+    print filename
+    cmd = "aria2c -c -o '%s' -s5 -x5 %s %s '%s'" % (filename, convert_none('--max-download-limit=', limit),
+                                                    convert_none('--dir=', output_dir), link)
     os.system(cmd)
 
 
