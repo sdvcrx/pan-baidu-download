@@ -48,21 +48,22 @@ show = '''python bddown_cli.py show [Baidupan-url]...
 Show the real download link and filename
 
 Example:
-python bddown_cli.py show http://pan.baidu.com/s/15lliC
+ python bddown_cli.py show http://pan.baidu.com/s/15lliC
 '''
 
-config = '''python bddown_cli.py config [command]...
+config = '''python bddown_cli.py config key [value]
 
-save configuration to file
+save configuration to config.ini
 
-Options:
-    --limit=[speed]             Max download speed limit.
-    --output-dir=[dir]          Download task to dir.'''
+Examples:
+ python bddown_cli.py config limit 500k
+ python bddown_cli.py config dir /home/john/Downloads
+'''
 
 help_help = '''Get helps:
- python lixian_cli.py help help
- python lixian_cli.py help examples
- python lixian_cli.py help readme
- python lixian_cli.py help <command>'''
+ python bddown_cli.py help help
+ python bddown_cli.py help download
+ python bddown_cli.py help show
+ python bddown_cli.py help <command>'''
 
 help = help_help

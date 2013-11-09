@@ -5,10 +5,10 @@ import urllib2
 import re
 import sys
 import os
-import json
 from collections import deque
 from sets import Set
 import getopt
+import ConfigParser
 import pdb
 
 from util import bd_help
@@ -61,9 +61,10 @@ def uniqify_list(seq):
 
 
 def download(args):
+    cf = Config()
+    limit = cf.dir
+    output_dir = cf.dir
     optlist, links = getopt.getopt(args, 'lD', ['limit=', 'dir='])
-    limit = None
-    output_dir = None
     for k, v in optlist:
         if k == '--limit':
             limit = v
@@ -104,17 +105,43 @@ def show(links):
     sys.exit(0)
 
 
-def config(argv):
-	pass
-    # try:
-    #     configure = json.load(file('config.json'))
-    #     for i in configure:
-    #         print "%-10s: %s" % (i, configure[i])
-    #     sys.exit(0)
-    # except IOError, e:
-    #     print sys.stderr >> "config.json不存在"
-    #     print sys.stderr >> "Exception: %s" % str(e)
-    #     sys.exit(1)
+class Config(object):
+    def __init__(self):
+        self.configfile = ConfigParser.ConfigParser(allow_no_value=True)
+        self.configfile.read('config.ini')
+
+
+    @property
+    def limit(self):
+        return self.configfile.get('option', 'limit')
+
+    @limit.setter
+    def limit(self, new_limit):
+        self.configfile.set('option', 'limit', new_limit)
+        self.configfile.write(open('config.ini', 'w'))
+
+    @property
+    def dir(self):
+        return self.configfile.get('option', 'dir')
+
+    @dir.setter
+    def dir(self, new_dir):
+        self.configfile.set('option', 'dir', new_dir)
+        self.configfile.write(open('config.ini', 'w'))
+
+
+def config(configuration):
+    cf = Config()
+    if len(configuration) == 0:
+        print 'limit = ', cf.limit
+        print 'dir = ', cf.dir
+    elif configuration[0] == 'limit':
+        cf.limit = configuration[1]
+        print 'Saving configuration to config.ini'
+    elif configuration[0] == 'dir':
+        cf.dir = configuration[1]
+        print 'Saving configuration to config.ini'
+    sys.exit(0)
 
 
 if '__main__' == __name__:
