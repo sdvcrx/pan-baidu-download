@@ -5,11 +5,11 @@ import urllib2
 import re
 import sys
 import os
+import json
 from collections import deque
 from sets import Set
 import getopt
 import ConfigParser
-import pdb
 
 from util import bd_help
 
@@ -18,26 +18,48 @@ class BaiduDown(object):
 
     def __init__(self, raw_link):
         self.bdlink = raw_link
+        self.header = {
+            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64)\
+                    AppleWebKit/537.36 (KHTML, like Gecko)\
+                    Chrome/28.0.1500.95 Safari/537.36'
+        }
         self.data = self._get_download_page()
+        self.share_uk, self.share_id, self.fid_list = self._getinfo()
 
     def __repr__(self):
         return "<filename> ==> %s\n<download link> ==> %s" % (self.filename, self.links)
 
     def _get_download_page(self):
-        header = {
-            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64)\
-                    AppleWebKit/537.36 (KHTML, like Gecko)\
-                    Chrome/28.0.1500.95 Safari/537.36'
-        }
-        request = urllib2.Request(url=self.bdlink, headers=header)
+        request = urllib2.Request(url=self.bdlink, headers=self.header)
         data = urllib2.urlopen(request).read()
         return data
 
+    def _getinfo(self):
+        fid_pattern = re.compile(r'disk.util.ViewShareUtils.fsId="(.+?)"', re.DOTALL)
+        try:
+            fid_list = re.findall(fid_pattern, self.data)[0]
+        except IndexError:
+            fid_list = None
+        pattern = re.compile(r'FileUtils.share_uk="(.+?)";FileUtils.share_id="(.+?)";', re.DOTALL)
+        try:
+            share_uk, share_id = re.findall(pattern, self.data)[0]
+        except IndexError:
+            share_uk, share_id = None, None
+        return share_uk, share_id, fid_list
+
     @property
     def links(self):
-        link_pattern = re.compile(r';;_dlink="(.+?)";')
-        links = re.findall(link_pattern, self.data)
-        return uniqify_list(links)
+        if self.fid_list:
+            url = "http://pan.baidu.com/share/download?uk=%s&shareid=%s&fid_list=[%s]" % (self.share_uk,
+                                                                                          self.share_id, self.fid_list)
+            req = urllib2.Request(url=url, headers=self.header)
+            decode = json.load(urllib2.urlopen(req))
+            links = [decode.get('dlink').encode('utf-8')]
+        else:
+            link_pattern = re.compile(r'\\"dlink\\":\\"(.*?&sh=1)')
+            links = re.findall(link_pattern, self.data)
+            links = [link.replace("\\", "") for link in links]
+        return links
 
     @property
     def filename(self):
@@ -109,7 +131,6 @@ class Config(object):
     def __init__(self):
         self.configfile = ConfigParser.ConfigParser(allow_no_value=True)
         self.configfile.read('config.ini')
-
 
     @property
     def limit(self):
