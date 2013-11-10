@@ -114,7 +114,7 @@ def download_command(filename, link, limit=None, output_dir=None):
 
 def show(links):
     if not len(links):
-        bd_help(show)
+        bd_help('show')
     else:
         queue = generate_download_queue(links)
         while True:
@@ -129,8 +129,9 @@ def show(links):
 
 class Config(object):
     def __init__(self):
+        self.path = os.path.dirname(os.path.abspath(__file__)) + '/' + 'config.ini'
         self.configfile = ConfigParser.ConfigParser(allow_no_value=True)
-        self.configfile.read('config.ini')
+        self.configfile.read(self.path)
 
     @property
     def limit(self):
@@ -139,7 +140,8 @@ class Config(object):
     @limit.setter
     def limit(self, new_limit):
         self.configfile.set('option', 'limit', new_limit)
-        self.configfile.write(open('config.ini', 'w'))
+        with open(name=self.path, mode='w') as fp:
+            self.configfile.write(fp)
 
     @property
     def dir(self):
@@ -148,7 +150,8 @@ class Config(object):
     @dir.setter
     def dir(self, new_dir):
         self.configfile.set('option', 'dir', new_dir)
-        self.configfile.write(open('config.ini', 'w'))
+        with open(name=self.path, mode='w') as fp:
+            self.configfile.write(fp)
 
 
 def config(configuration):
