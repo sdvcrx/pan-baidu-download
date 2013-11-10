@@ -24,8 +24,8 @@ Basic commands:
 
 def usage():
     return basic_usage + '''
-Use python bddown_cli.py help for details
-Use python bddown_cli.py help <command> for more information on a specific command.
+Use 'python bddown_cli.py help' for details
+Use 'python bddown_cli.py help <command>' for more information on a specific command.
 Check https://github.com/banbanchs/pan-baidu-download for details'''
 
 

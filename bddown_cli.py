@@ -3,7 +3,6 @@
 
 import sys
 
-#from bddown_help import *
 import bddown_help
 from util import *
 from bddown_core import download, show, config
@@ -11,7 +10,7 @@ from bddown_core import download, show, config
 
 def execute_command(args=sys.argv[1:]):
     if not args:
-        print usage()
+        usage()
         sys.exit(1)
 
     command = args[0]
