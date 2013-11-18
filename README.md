@@ -3,6 +3,9 @@ pan-baidu-download
 
 百度网盘下载脚本
 
+**需要输入验证码时需要浏览器，暂时不支持多文件下载**
+
+**到期末为止只保证其可用性，不添加新功能**
 
 ### 要求
 
@@ -21,58 +24,72 @@ pan-baidu-download
 
 - 多线程（默认为5）
 
-- 单页面多文件下载（部分链接可能无效）
-
 - 无需登录
+
+- 支持输入验证码
+
+## 提示
+
+linux下可使用以下命令减小敲键盘的数目
+
+`~/bin` 需要添加到环境变量 `PATH`
+
+```
+ln -s 你的lixian_cli.py路径 ~/bin/pan
+```
 
 ## Quick start
 
 下载
 
 ```
-python bddown_cli.py download [options] [Baidupan-url]...
+pan download [options] [BaiduPan-url]...
 
 Options:
     --limit=[speed]             Max download speed limit.
     --output-dir=[dir]          Download task to dir.
 ```
 
-    python bddown_cli.py download pan-baidu-url
+    pan download pan-baidu-url
 
 限速 `NUM kb` 下载
 
-    python bddown_cli.py --limit=500k download pan-baidu-url ...
+    pan download --limit=500k pan-baidu-url ...
 
 指定下载目录
 
-    python bddown_cli.py --output-dir=/home/memory/Downloads pan-baidu-url ...
+    pan download --output-dir=/home/memory/Downloads pan-baidu-url ...
 
 下载多个链接
 
-    python bddown_cli.py download pan-baidu-url1 pan-baidu-url2 pan-baidu-url3 ...
+    pan download pan-baidu-url1 pan-baidu-url2 pan-baidu-url3 ...
 
 停止 `<Ctrl> + C`
 
 继续下载
 
-    python bddown_cli.py download pan-baidu-url ...
+    pan download pan-baidu-url ...
     
 显示下载链接
 
-    python bddown_cli.py show pan-baidu-url ...
+    pan show pan-baidu-url ...
 
 帮助
 
-    python bddown_cli.py -h
-    python bddown_cli.py help [download|show|help]
+    pan -h
+    pan help [download|show|help]
 
-**config功能暂未完成**
+配置config
+
+    pan config
+    pan config limit 500k
+    pan config dir ~/Downloads/
 
 ## 使用指南
 
     git clone git@github.com:banbanchs/pan-baidu-download.git
     cd pan-baidu-download
-    python bddown_cli.py pan-baidu-url
+    pan pan-baidu-url
 
 
 ## 测试环境

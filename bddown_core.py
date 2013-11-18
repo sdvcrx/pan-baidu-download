@@ -15,7 +15,6 @@ from util import bd_help
 
 
 class BaiduDown(object):
-
     def __init__(self, raw_link):
         self.bdlink = raw_link
         self.header = {
@@ -47,19 +46,30 @@ class BaiduDown(object):
             share_uk, share_id = None, None
         return share_uk, share_id, fid_list
 
+    def _get_json(self, input_code=None, vcode=None):
+        url = "http://pan.baidu.com/share/download?uk=%s&shareid=%s&fid_list=[%s]%s%s" % \
+              (self.share_uk, self.share_id, self.fid_list, convert_none('&input=', input_code),
+               convert_none('&vcode=', vcode))
+        req = urllib2.Request(url=url, headers=self.header)
+        json_data = json.load(urllib2.urlopen(req))
+        return json_data
+
     @property
     def links(self):
-        if self.fid_list:
-            url = "http://pan.baidu.com/share/download?uk=%s&shareid=%s&fid_list=[%s]" % (self.share_uk,
-                                                                                          self.share_id, self.fid_list)
-            req = urllib2.Request(url=url, headers=self.header)
-            decode = json.load(urllib2.urlopen(req))
-            links = [decode.get('dlink').encode('utf-8')]
+        data = self._get_json()
+        if not data.get('errno'):
+            return [data.get('dlink').encode('utf-8')]
         else:
-            link_pattern = re.compile(r'\\"dlink\\":\\"(.*?&sh=1)')
-            links = re.findall(link_pattern, self.data)
-            links = [link.replace("\\", "") for link in links]
-        return links
+            vcode = data.get('vcode')
+            img = data.get('img')
+            import webbrowser
+            webbrowser.open(img)
+            input_code = raw_input("请输入看到的验证码\n")
+            data = self._get_json(vcode=vcode, input_code=input_code)
+            if not data.get('errno'):
+                return [data.get('dlink').encode('utf-8')]
+            else:
+                raise VerificationCodeError
 
     @property
     def filename(self):
@@ -69,12 +79,20 @@ class BaiduDown(object):
         return filename
 
 
+class VerificationCodeError(Exception):
+    def __str__(self):
+        return '验证码错误或异常\n'
+
+
 def generate_download_queue(links):
     download_queue = deque()
     for link in links:
         bd = BaiduDown(link)
         download_queue.extend(zip(bd.filename, bd.links))
     return download_queue
+
+
+convert_none = lambda opt, arg: opt + arg if arg else ""
 
 
 def uniqify_list(seq):
@@ -105,7 +123,6 @@ def download(args):
 
 
 def download_command(filename, link, limit=None, output_dir=None):
-    convert_none = lambda opt, arg: opt + arg if arg else ""
     print filename
     cmd = "aria2c -c -o '%s' -s5 -x5 %s %s '%s'" % (filename, convert_none('--max-download-limit=', limit),
                                                     convert_none('--dir=', output_dir), link)
@@ -157,8 +174,8 @@ class Config(object):
 def config(configuration):
     cf = Config()
     if len(configuration) == 0:
-        print 'limit = ', cf.limit
-        print 'dir = ', cf.dir
+        print 'limit =', cf.limit
+        print 'dir =', cf.dir
     elif configuration[0] == 'limit':
         cf.limit = configuration[1]
         print 'Saving configuration to config.ini'
