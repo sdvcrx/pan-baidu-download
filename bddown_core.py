@@ -23,7 +23,8 @@ class BaiduDown(object):
                     Chrome/28.0.1500.95 Safari/537.36'
         }
         self.data = self._get_download_page()
-        self.share_uk, self.share_id, self.fid_list = self._getinfo()
+        self.share_uk, self.share_id, self.fid_list = self._get_info()
+        self.save_vcode = int(Config().vcode)
 
     def __repr__(self):
         return "<filename> ==> %s\n<download link> ==> %s" % (self.filename, self.links)
@@ -33,7 +34,7 @@ class BaiduDown(object):
         data = urllib2.urlopen(request).read()
         return data
 
-    def _getinfo(self):
+    def _get_info(self):
         fid_pattern = re.compile(r'disk.util.ViewShareUtils.fsId="(.+?)"', re.DOTALL)
         try:
             fid_list = re.findall(fid_pattern, self.data)[0]
@@ -54,6 +55,15 @@ class BaiduDown(object):
         json_data = json.load(urllib2.urlopen(req))
         return json_data
 
+    def open_in_webbrowser(self, img):
+        import webbrowser
+        webbrowser.open(img)
+
+    def save(self, img):
+        data = urllib2.urlopen(img).read()
+        with open(os.path.dirname(os.path.abspath(__file__)) + '/vcode.jpg', mode='wb') as fp:
+            fp.write(data)
+
     @property
     def links(self):
         data = self._get_json()
@@ -62,8 +72,10 @@ class BaiduDown(object):
         else:
             vcode = data.get('vcode')
             img = data.get('img')
-            import webbrowser
-            webbrowser.open(img)
+            if self.save_vcode:
+                self.save(img)
+            else:
+                self.open_in_webbrowser(img)
             input_code = raw_input("请输入看到的验证码\n")
             data = self._get_json(vcode=vcode, input_code=input_code)
             if not data.get('errno'):
@@ -170,18 +182,34 @@ class Config(object):
         with open(name=self.path, mode='w') as fp:
             self.configfile.write(fp)
 
+    @property
+    def vcode(self):
+        return self.configfile.get('option', 'save_vcode')
+
+    @vcode.setter
+    def vcode(self, bol):
+        self.configfile.set('option', 'save_vcode', bol)
+        with open(name=self.path, mode='w') as fp:
+            self.configfile.write(fp)
+
 
 def config(configuration):
     cf = Config()
     if len(configuration) == 0:
-        print 'limit =', cf.limit
-        print 'dir =', cf.dir
+        print 'limit = %s' % cf.limit
+        print 'dir = %s' % cf.dir
+        print 'save_vcode = %s' % cf.vcode
     elif configuration[0] == 'limit':
         cf.limit = configuration[1]
         print 'Saving configuration to config.ini'
     elif configuration[0] == 'dir':
         cf.dir = configuration[1]
         print 'Saving configuration to config.ini'
+    elif configuration[0] == 'save_vcode':
+        cf.vcode = configuration[1]
+        print 'Saving configuration to config.ini'
+    else:
+        raise TypeError('修改配置错误')
     sys.exit(0)
 
 

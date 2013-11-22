@@ -58,6 +58,7 @@ save configuration to config.ini
 Examples:
  python bddown_cli.py config limit 500k
  python bddown_cli.py config dir /home/john/Downloads
+ python bddown_cli.py config save_vcode 1
 '''
 
 help_help = '''Get helps:
