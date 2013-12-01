@@ -18,13 +18,16 @@ class BaiduDown(object):
     def __init__(self, raw_link):
         self.bdlink = raw_link
         self.header = {
+            'Host': 'pan.baidu.com',
+            'Origin': 'http://pan.baidu.com',
+            'Referer': self.bdlink,
             'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64)\
                     AppleWebKit/537.36 (KHTML, like Gecko)\
                     Chrome/28.0.1500.95 Safari/537.36'
         }
         self.data = self._get_download_page()
-        self.share_uk, self.share_id, self.fid_list = self._get_info()
         self.save_vcode = int(Config().vcode)
+        self.fid_list, self.share_uk, self.share_id, self.timestamp, self.sign = self._get_info()
 
     def __repr__(self):
         return "<filename> ==> %s\n<download link> ==> %s" % (self.filename, self.links)
@@ -35,21 +38,30 @@ class BaiduDown(object):
         return data
 
     def _get_info(self):
+        status = True
         fid_pattern = re.compile(r'disk.util.ViewShareUtils.fsId="(.+?)"', re.DOTALL)
         try:
             fid_list = re.findall(fid_pattern, self.data)[0]
         except IndexError:
-            fid_list = None
-        pattern = re.compile(r'FileUtils.share_uk="(.+?)";FileUtils.share_id="(.+?)";', re.DOTALL)
+            status = False
+        pattern = re.compile(r'FileUtils.share_uk="(\d+)";FileUtils.share_id="(\d+)";.+?;'
+                             r'FileUtils.share_timestamp="(\d+)";FileUtils.share_sign="(.+?)"', re.DOTALL)
         try:
-            share_uk, share_id = re.findall(pattern, self.data)[0]
+            info = re.findall(pattern, self.data)[0]
+            share_uk, share_id, timestamp, sign = info
         except IndexError:
-            share_uk, share_id = None, None
-        return share_uk, share_id, fid_list
+            status = False
+        if status:
+            return fid_list, share_uk, share_id, timestamp, sign
+        else:
+            return None, None, None, None, None
 
     def _get_json(self, input_code=None, vcode=None):
-        url = "http://pan.baidu.com/share/download?uk=%s&shareid=%s&fid_list=[%s]%s%s" % \
-              (self.share_uk, self.share_id, self.fid_list, convert_none('&input=', input_code),
+        url = 'http://pan.baidu.com/share/download?channel=chunlei&clienttype=0&web=1' \
+              '&uk=%s&shareid=%s&timestamp=%s&sign=%s&fid_list=["%s"]%s%s' \
+              '&channel=chunlei&clienttype=0&web=1' % \
+              (self.share_uk, self.share_id, self.timestamp, self.sign, self.fid_list,
+               convert_none('&input=', input_code),
                convert_none('&vcode=', vcode))
         req = urllib2.Request(url=url, headers=self.header)
         json_data = json.load(urllib2.urlopen(req))
@@ -63,6 +75,7 @@ class BaiduDown(object):
         data = urllib2.urlopen(img).read()
         with open(os.path.dirname(os.path.abspath(__file__)) + '/vcode.jpg', mode='wb') as fp:
             fp.write(data)
+        print "验证码已经保存至", os.path.dirname(os.path.abspath(__file__))
 
     @property
     def links(self):
