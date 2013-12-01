@@ -7,7 +7,6 @@ import sys
 import os
 import json
 from collections import deque
-from sets import Set
 import getopt
 import ConfigParser
 
@@ -118,11 +117,6 @@ def generate_download_queue(links):
 
 
 convert_none = lambda opt, arg: opt + arg if arg else ""
-
-
-def uniqify_list(seq):
-    seen = Set()
-    return [x for x in seq if x not in seen and not seen.add(x)]
 
 
 def download(args):
