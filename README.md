@@ -7,9 +7,9 @@ pan-baidu-download
 
 **若想改用web浏览器打开，可使用 `pan config save_code 0` 或修改 `config.ini` 中的 `save_vcode` 为0**
 
-**到期末为止只保证其可用性，不添加新功能**
+**限速的问题好像解决了，在我这里测试能到满速**
 
-**百度对非登陆用户限速严重，将加入登陆功能**
+[参考链接](http://userscripts.org/topics/136081)
 
 ### 要求
 
