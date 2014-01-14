@@ -66,11 +66,13 @@ class BaiduDown(object):
         json_data = json.load(urllib2.urlopen(req))
         return json_data
 
-    def open_in_webbrowser(self, img):
+    @staticmethod
+    def open_in_webbrowser(img):
         import webbrowser
         webbrowser.open(img)
 
-    def save(self, img):
+    @staticmethod
+    def save(img):
         data = urllib2.urlopen(img).read()
         with open(os.path.dirname(os.path.abspath(__file__)) + '/vcode.jpg', mode='wb') as fp:
             fp.write(data)
@@ -93,7 +95,7 @@ class BaiduDown(object):
             if not data.get('errno'):
                 return [data.get('dlink').encode('utf-8')]
             else:
-                raise VerificationCodeError
+                raise VerificationCodeError("验证码错误\n")
 
     @property
     def filename(self):
@@ -104,8 +106,7 @@ class BaiduDown(object):
 
 
 class VerificationCodeError(Exception):
-    def __str__(self):
-        return '验证码错误或异常\n'
+    pass
 
 
 def generate_download_queue(links):
