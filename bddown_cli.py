@@ -6,6 +6,7 @@ import sys
 import bddown_help
 from util import *
 from bddown_core import download, show, config
+from command.show import show
 from command.login import login
 
 
