@@ -3,11 +3,17 @@ pan-baidu-download
 
 百度网盘下载脚本
 
-**验证码默认保存至代码目录下，暂时不支持多文件下载**
+** 更新记录：**
 
-**若想改用web浏览器打开，可使用 `pan config save_code 0` 或修改 `config.ini` 中的 `save_vcode` 为0**
+[14-01-24]
 
-**限速的问题好像解决了，在我这里测试能到满速**
+已支持登录！请在 config.ini 中填写帐号密码或使用 `pan config username [Your username]` 和 `pan config password [password]` 填入帐号密码，并用 `pan login` 进行登录
+
+ 在浏览器打开验证码功能已经移除，暂时不支持多文件下载
+
+[13-12-24]
+
+限速的问题好像解决了，在我这里测试能到满速
 
 [参考链接](http://userscripts.org/topics/136081)
 
@@ -27,8 +33,6 @@ pan-baidu-download
 - 最大下载速度限制
 
 - 多线程（默认为5）
-
-- 无需登录
 
 - 支持输入验证码
 
@@ -56,6 +60,16 @@ Options:
 
     pan download pan-baidu-url
 
+登录
+
+    pan login [username] [password]
+
+or
+
+    pan config username XXXX (your username and password)
+    pan config password 12345
+	pan login
+
 限速 `NUM kb` 下载
 
     pan download --limit=500k pan-baidu-url ...
@@ -73,7 +87,7 @@ Options:
 继续下载
 
     pan download pan-baidu-url ...
-    
+
 显示下载链接
 
     pan show pan-baidu-url ...
@@ -81,11 +95,13 @@ Options:
 帮助
 
     pan -h
-    pan help [download|show|help]
+    pan help [login | download | show | help | config]
 
 配置config
 
     pan config
+    pan config username XXXX
+    pan config passwd 123456
     pan config limit 500k
     pan config dir ~/Downloads/
 
@@ -93,7 +109,7 @@ Options:
 
     git clone git@github.com:banbanchs/pan-baidu-download.git
     cd pan-baidu-download
-    pan pan-baidu-url
+    python bddown_cli.py download [Baidu Pan url]
 
 
 ## 测试环境
@@ -102,13 +118,13 @@ Options:
 
 ```
 $ uname -a
-Linux banbanchs 3.11.6-1-ARCH #1 SMP PREEMPT Fri Oct 18 23:22:36 CEST 2013 x86_64 GNU/Linux
+Linux banbanchs 3.12.8-1-ARCH #1 SMP PREEMPT Thu Jan 16 09:16:34 CET 2014 x86_64 GNU/Linux
 $ aria2c --version
-aria2 version 1.18.1
+aria2 version 1.18.3
 $ python -V
-Python 2.7.5
+Python 2.7.6
 $ date -I
-2013-10-26
+2014-01-24
 ```
 
 
@@ -120,17 +136,19 @@ $ date -I
 
 - ~~指定下载目录~~
 
-- 导出aria2下载链接
-
 - ~~配置文件支持~~
 
 - 编码完善
 
 - Windows7支持
 
+- 列出自己网盘的文件
+
 ### 已知问题
 
-编码不是utf-8时下载的文件名可能会乱码，window可能会乱码（未测试）
+- 登录时还不支持输入验证码，可能出现登录错误
+
+- 编码不是utf-8时下载的文件名可能会乱码，window可能会乱码（未测试）
 
 请发issue并附上你的系统，编码
 
