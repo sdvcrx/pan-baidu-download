@@ -1,6 +1,7 @@
 #!/usr/bin/env python2
 #!coding=utf-8
 
+import cookielib
 import urllib2
 import re
 import sys
@@ -15,20 +16,22 @@ from command.config import configure
 class BaiduDown(object):
     def __init__(self, raw_link):
         self.bdlink = raw_link
-        self.header = {
-            'Host': 'pan.baidu.com',
-            'Origin': 'http://pan.baidu.com',
-            'Referer': self.bdlink,
-            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64)\
-                    AppleWebKit/537.36 (KHTML, like Gecko)\
-                    Chrome/28.0.1500.95 Safari/537.36'
-        }
+        self.cookjar = cookielib.LWPCookieJar()
+        if os.access(configure.cookies, os.F_OK):
+            self.cookjar.load(configure.cookies)
+        self.opener = urllib2.build_opener(
+            urllib2.HTTPCookieProcessor(self.cookjar)
+        )
+        self.opener.addheaders = [
+            ('Referer', self.bdlink),
+            ('User-Agent', 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:26.0) Gecko/20100101 Firefox/26.0')
+        ]
         self.data = self._get_download_page()
         self.fid_list, self.share_uk, self.share_id, self.timestamp, self.sign = self._get_info()
 
     def _get_download_page(self):
-        request = urllib2.Request(url=self.bdlink, headers=self.header)
-        data = urllib2.urlopen(request).read()
+        req = self.opener.open(self.bdlink)
+        data = req.read()
         return data
 
     def _get_info(self):
@@ -57,8 +60,8 @@ class BaiduDown(object):
               (self.share_uk, self.share_id, self.timestamp, self.sign, self.fid_list,
                convert_none('&input=', input_code),
                convert_none('&vcode=', vcode))
-        req = urllib2.Request(url=url, headers=self.header)
-        json_data = json.load(urllib2.urlopen(req))
+        req = self.opener.open(url)
+        json_data = json.load(req)
         return json_data
 
     @staticmethod
