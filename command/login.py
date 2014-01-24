@@ -91,6 +91,7 @@ class BaiduAccount(object):
             pass
         self._get_token()
         self._post_data()
+        logging.debug(self.cj)
         if not self.bduss and not self.baiduid:
             raise LoginError('登陆异常')
 
@@ -112,3 +113,7 @@ class GetTokenError(Exception):
 class LoginError(Exception):
     pass
 
+
+def login(username, passwd, cookies):
+    account = BaiduAccount(username, passwd, cookies)
+    account.login()

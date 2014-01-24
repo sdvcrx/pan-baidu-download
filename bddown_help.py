@@ -34,6 +34,14 @@ def show_help():
 Basic usage:
     ''' + basic_usage + extended_usage + '\n'
 
+login = '''python bddown_cli.py login [username] [password]
+
+Baidu login.
+
+Example:
+  python bddown_cli.py login XXXXX 123456
+  python bddown_cli.py login xxx@qq.com 123456
+'''
 
 download = '''python bddown_cli.py download [options] [Baidupan-url]...
 

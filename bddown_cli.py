@@ -6,6 +6,7 @@ import sys
 import bddown_help
 from util import *
 from bddown_core import download, show, config
+from command.login import login
 
 
 def execute_command(args=sys.argv[1:]):
@@ -26,6 +27,7 @@ def execute_command(args=sys.argv[1:]):
 
     commands = {
         'help':         bd_help,
+        'login':        login,
         'download':     download,
         'show':         show,
         'config':       config
