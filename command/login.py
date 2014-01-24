@@ -123,7 +123,7 @@ def login(args):
     else:
         username = configure.username
         passwd = configure.password
-    if not username and passwd:
+    if not username and not passwd:
         raise LoginError('请输入你的帐号密码！')
     cookies = configure.cookies
     account = BaiduAccount(username, passwd, cookies)
