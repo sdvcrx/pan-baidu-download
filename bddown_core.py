@@ -8,9 +8,9 @@ import os
 import json
 from collections import deque
 import getopt
-import ConfigParser
 
 from util import bd_help
+from command.config import configure
 
 
 class BaiduDown(object):
@@ -25,7 +25,6 @@ class BaiduDown(object):
                     Chrome/28.0.1500.95 Safari/537.36'
         }
         self.data = self._get_download_page()
-        self.save_vcode = int(Config().vcode)
         self.fid_list, self.share_uk, self.share_id, self.timestamp, self.sign = self._get_info()
 
     def __repr__(self):
@@ -67,11 +66,6 @@ class BaiduDown(object):
         return json_data
 
     @staticmethod
-    def open_in_webbrowser(img):
-        import webbrowser
-        webbrowser.open(img)
-
-    @staticmethod
     def save(img):
         data = urllib2.urlopen(img).read()
         with open(os.path.dirname(os.path.abspath(__file__)) + '/vcode.jpg', mode='wb') as fp:
@@ -86,10 +80,7 @@ class BaiduDown(object):
         else:
             vcode = data.get('vcode')
             img = data.get('img')
-            if self.save_vcode:
-                self.save(img)
-            else:
-                self.open_in_webbrowser(img)
+            self.save(img)
             input_code = raw_input("请输入看到的验证码\n")
             data = self._get_json(vcode=vcode, input_code=input_code)
             if not data.get('errno'):
@@ -121,9 +112,8 @@ convert_none = lambda opt, arg: opt + arg if arg else ""
 
 
 def download(args):
-    cf = Config()
-    limit = cf.dir
-    output_dir = cf.dir
+    limit = configure.limit
+    output_dir = configure.dir
     optlist, links = getopt.getopt(args, 'lD', ['limit=', 'dir='])
     for k, v in optlist:
         if k == '--limit':
@@ -155,79 +145,6 @@ def download_command(filename, link, limit=None, output_dir=None):
               "link": link
           }
     os.system(cmd)
-
-
-def show(links):
-    if not len(links):
-        bd_help('show')
-    else:
-        queue = generate_download_queue(links)
-        while True:
-            try:
-                filename, link = queue.popleft()
-            except IndexError:
-                break
-            else:
-                print "%s\n%s\n\n" % (filename, link)
-    sys.exit(0)
-
-
-class Config(object):
-    def __init__(self):
-        self.path = os.path.dirname(os.path.abspath(__file__)) + '/' + 'config.ini'
-        self.configfile = ConfigParser.ConfigParser(allow_no_value=True)
-        self.configfile.read(self.path)
-
-    @property
-    def limit(self):
-        return self.configfile.get('option', 'limit')
-
-    @limit.setter
-    def limit(self, new_limit):
-        self.configfile.set('option', 'limit', new_limit)
-        with open(name=self.path, mode='w') as fp:
-            self.configfile.write(fp)
-
-    @property
-    def dir(self):
-        return self.configfile.get('option', 'dir')
-
-    @dir.setter
-    def dir(self, new_dir):
-        self.configfile.set('option', 'dir', new_dir)
-        with open(name=self.path, mode='w') as fp:
-            self.configfile.write(fp)
-
-    @property
-    def vcode(self):
-        return self.configfile.get('option', 'save_vcode')
-
-    @vcode.setter
-    def vcode(self, bol):
-        self.configfile.set('option', 'save_vcode', bol)
-        with open(name=self.path, mode='w') as fp:
-            self.configfile.write(fp)
-
-
-def config(configuration):
-    cf = Config()
-    if len(configuration) == 0:
-        print 'limit = %s' % cf.limit
-        print 'dir = %s' % cf.dir
-        print 'save_vcode = %s' % cf.vcode
-    elif configuration[0] == 'limit':
-        cf.limit = configuration[1]
-        print 'Saving configuration to config.ini'
-    elif configuration[0] == 'dir':
-        cf.dir = configuration[1]
-        print 'Saving configuration to config.ini'
-    elif configuration[0] == 'save_vcode':
-        cf.vcode = configuration[1]
-        print 'Saving configuration to config.ini'
-    else:
-        raise TypeError('修改配置错误')
-    sys.exit(0)
-
 
 if '__main__' == __name__:
     pass
