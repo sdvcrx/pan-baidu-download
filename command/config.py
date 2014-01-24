@@ -20,8 +20,7 @@ class Config(object):
     @limit.setter
     def limit(self, new_limit):
         self.configfile.set('option', 'limit', new_limit)
-        with open(name=self.path, mode='w') as fp:
-            self.configfile.write(fp)
+        self.save_config()
 
     @property
     def dir(self):
@@ -30,8 +29,7 @@ class Config(object):
     @dir.setter
     def dir(self, new_dir):
         self.configfile.set('option', 'dir', new_dir)
-        with open(name=self.path, mode='w') as fp:
-            self.configfile.write(fp)
+        self.save_config()
 
     @property
     def cookies(self):
@@ -41,6 +39,27 @@ class Config(object):
     @cookies.setter
     def cookies(self, cookies_path):
         self.configfile.set('option', 'cookies', cookies_path)
+        self.save_config()
+
+    @property
+    def username(self):
+        return self.configfile.get('option', 'username')
+
+    @username.setter
+    def username(self, new_name):
+        self.configfile.set('option', 'username', new_name)
+        self.save_config()
+
+    @property
+    def password(self):
+        return self.configfile.get('option', 'password')
+
+    @password.setter
+    def password(self, new_passwd):
+        self.configfile.set('option', 'password', new_passwd)
+        self.save_config()
+
+    def save_config(self):
         with open(name=self.path, mode='w') as fp:
             self.configfile.write(fp)
 
@@ -60,6 +79,12 @@ def config(configuration):
         print 'Saving configuration to config.ini'
     elif configuration[0] == 'cookies':
         configure.cookies = configuration[1]
+        print 'Saving configuration to config.ini'
+    elif configuration[0] == 'username':
+        configure.username = configuration[1]
+        print 'Saving configuration to config.ini'
+    elif configuration[0] == 'password':
+        configure.password = configuration[1]
         print 'Saving configuration to config.ini'
     else:
         raise TypeError('修改配置错误')
