@@ -6,7 +6,6 @@ import re
 import sys
 import os
 import json
-from collections import deque
 import getopt
 
 from util import bd_help
@@ -26,9 +25,6 @@ class BaiduDown(object):
         }
         self.data = self._get_download_page()
         self.fid_list, self.share_uk, self.share_id, self.timestamp, self.sign = self._get_info()
-
-    def __repr__(self):
-        return "<filename> ==> %s\n<download link> ==> %s" % (self.filename, self.links)
 
     def _get_download_page(self):
         request = urllib2.Request(url=self.bdlink, headers=self.header)
@@ -73,10 +69,10 @@ class BaiduDown(object):
         print "验证码已经保存至", os.path.dirname(os.path.abspath(__file__))
 
     @property
-    def links(self):
+    def link(self):
         data = self._get_json()
         if not data.get('errno'):
-            return [data.get('dlink').encode('utf-8')]
+            return data.get('dlink').encode('utf-8')
         else:
             vcode = data.get('vcode')
             img = data.get('img')
@@ -84,15 +80,18 @@ class BaiduDown(object):
             input_code = raw_input("请输入看到的验证码\n")
             data = self._get_json(vcode=vcode, input_code=input_code)
             if not data.get('errno'):
-                return [data.get('dlink').encode('utf-8')]
+                return data.get('dlink').encode('utf-8')
             else:
                 raise VerificationCodeError("验证码错误\n")
 
     @property
     def filename(self):
         file_pattern = re.compile(r'server_filename\\":\\"(.+?)\\"')
-        filename = re.findall(file_pattern, self.data)
-        filename = [fn.replace("\\\\", "\\").decode("unicode_escape").encode("utf-8") for fn in filename]
+        try:
+            filename = re.search(file_pattern, self.data).group(1)
+            filename = filename.replace("\\\\", "\\").decode("unicode escape").encode("utf-8")
+        except AttributeError:
+            raise GetFilenameError("无法获取文件名")
         return filename
 
 
@@ -100,12 +99,8 @@ class VerificationCodeError(Exception):
     pass
 
 
-def generate_download_queue(links):
-    download_queue = deque()
-    for link in links:
-        bd = BaiduDown(link)
-        download_queue.extend(zip(bd.filename, bd.links))
-    return download_queue
+class GetFilenameError(Exception):
+    pass
 
 
 convert_none = lambda opt, arg: opt + arg if arg else ""
@@ -120,14 +115,11 @@ def download(args):
             limit = v
         elif k == '--dir':
             output_dir = v
-    queue = generate_download_queue(links)
-    while True:
-        try:
-            filename, link = queue.popleft()
-        except IndexError:
-            break
-        else:
-            download_command(filename, link, limit=limit, output_dir=output_dir)
+    for url in args:
+        pan = BaiduDown(url)
+        filename = pan.filename
+        link = pan.link
+        download_command(filename, link, limit=limit, output_dir=output_dir)
 
     sys.exit(0)
 
