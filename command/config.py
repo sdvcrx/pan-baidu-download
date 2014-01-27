@@ -71,6 +71,8 @@ def config(configuration):
         print 'limit = %s' % configure.limit
         print 'dir = %s' % configure.dir
         print 'cookies = %s' % configure.cookies
+        print 'username = %s' % configure.username
+        print 'password = %s' % configure.password
     elif configuration[0] == 'limit':
         configure.limit = configuration[1]
         print 'Saving configuration to config.ini'
