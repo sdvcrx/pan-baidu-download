@@ -118,7 +118,7 @@ def download(args):
             limit = v
         elif k == '--dir':
             output_dir = v
-    for url in args:
+    for url in links:
         pan = BaiduDown(url)
         filename = pan.filename
         link = pan.link
