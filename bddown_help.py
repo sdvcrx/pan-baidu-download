@@ -6,6 +6,7 @@ basic_command = [
     ('login',       'Login using Baidu account'),
     ('download',    'Download file from the Baidu pan link'),
     ('show',        'Show the Baidu pan real link and filename'),
+    ('export',      'export link to aria2 json-rpc'),
     ('config',      'save configuration to file')
 ]
 
@@ -58,6 +59,14 @@ Show the real download link and filename
 
 Example:
  python bddown_cli.py show http://pan.baidu.com/s/15lliC
+'''
+
+export = '''python bddown_cli.py export [Baidupan-url]...
+
+export link to aria2 json-rpc
+
+Example:
+  python bddown_cli.py show http://pan.baidu.com/s/15lliC
 '''
 
 config = '''python bddown_cli.py config key [value]

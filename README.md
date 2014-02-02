@@ -3,7 +3,13 @@ pan-baidu-download
 
 百度网盘下载脚本
 
-** 更新记录：**
+**更新记录：**
+
+[14-02-02]
+
+添加导出到Aria2 JsonRPC
+
+*慎用此功能，获取到的链接有可能会因时间过长而失效*
 
 [14-01-24]
 
@@ -87,6 +93,10 @@ or
 继续下载
 
     pan download pan-baidu-url ...
+
+JsonRPC
+
+    pan export pan-baidu-url ...
 
 显示下载链接
 

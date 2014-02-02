@@ -9,6 +9,7 @@ from bddown_core import download
 from command.show import show
 from command.login import login
 from command.config import config
+from command.export import export
 
 
 def execute_command(args=sys.argv[1:]):
@@ -31,6 +32,7 @@ def execute_command(args=sys.argv[1:]):
         'help':         bd_help,
         'login':        login,
         'download':     download,
+        'export':       export,
         'show':         show,
         'config':       config
     }

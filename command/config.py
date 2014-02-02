@@ -59,6 +59,15 @@ class Config(object):
         self.configfile.set('option', 'password', new_passwd)
         self.save_config()
 
+    @property
+    def jsonrpc(self):
+        return self.configfile.get('option', 'jsonrpc')
+
+    @jsonrpc.setter
+    def jsonrpc(self, new_path):
+        self.configfile.set('option', 'jsonrpc', new_path)
+        self.save_config()
+
     def save_config(self):
         with open(name=self.path, mode='w') as fp:
             self.configfile.write(fp)
@@ -73,6 +82,7 @@ def config(configuration):
         print 'cookies = %s' % configure.cookies
         print 'username = %s' % configure.username
         print 'password = %s' % configure.password
+        print 'jsonprc  = %s' % configure.jsonrpc
     elif configuration[0] == 'limit':
         configure.limit = configuration[1]
         print 'Saving configuration to config.ini'
@@ -88,6 +98,8 @@ def config(configuration):
     elif configuration[0] == 'password':
         configure.password = configuration[1]
         print 'Saving configuration to config.ini'
+    elif configuration[0] == 'jsonrpc':
+        configure.jsonrpc = configuration[1]
     else:
         raise TypeError('修改配置错误')
     sys.exit(0)
