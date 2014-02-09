@@ -8,6 +8,8 @@ import sys
 import os
 import json
 import getopt
+import logging
+from time import time
 
 from util import bd_help
 from command.config import configure
@@ -31,6 +33,9 @@ class BaiduDown(object):
 
     def _get_download_page(self):
         req = self.opener.open(self.bdlink)
+        if 'init' in req.url:
+            self._verify_passwd(req.url)
+            req = self.opener.open(self.bdlink)
         data = req.read()
         return data
 
@@ -64,6 +69,25 @@ class BaiduDown(object):
         json_data = json.load(req)
         return json_data
 
+    def _verify_passwd(self, url):
+        pwd = raw_input("请输入提取密码\n")
+        data = "pwd=%s&vcode=" % pwd
+        url = "%s&t=%d&" % (url.replace('init', 'verify'), int(time()))
+        logging.debug(url)
+        req = self.opener.open(url, data=data)
+        mesg = req.read()
+        logging.debug(mesg)
+        logging.debug(req.info())
+        errno = json.loads(mesg).get('errno')
+        if errno == -63:
+            self._vcode_handle()
+        elif errno == -9:
+            raise VerificationError("提取密码错误\n")
+
+    # TODO
+    def _vcode_handle(self):
+        raise VerificationError("提取密码错误\n")
+
     @staticmethod
     def save(img):
         data = urllib2.urlopen(img).read()
@@ -85,7 +109,7 @@ class BaiduDown(object):
             if not data.get('errno'):
                 return data.get('dlink').encode('utf-8')
             else:
-                raise VerificationCodeError("验证码错误\n")
+                raise VerificationError("验证码错误\n")
 
     @property
     def filename(self):
@@ -98,7 +122,7 @@ class BaiduDown(object):
         return filename
 
 
-class VerificationCodeError(Exception):
+class VerificationError(Exception):
     pass
 
 
