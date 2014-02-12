@@ -11,7 +11,7 @@ import getopt
 import logging
 from time import time
 
-from util import bd_help
+from util import check_url, add_http
 from command.config import configure
 
 
@@ -142,6 +142,8 @@ def download(args):
             limit = v
         elif k == '--dir':
             output_dir = v
+    links = filter(check_url, links)    # filter the wrong url
+    links = map(add_http, links)        # add 'http://'
     for url in links:
         pan = BaiduDown(url)
         filename = pan.filename
