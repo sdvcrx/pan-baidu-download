@@ -86,7 +86,7 @@ class BaiduDown(object):
 
     # TODO
     def _vcode_handle(self):
-        raise VerificationError("提取密码错误\n")
+        raise VerificationError("检测到需要输入验证码，建议稍后再试\n")
 
     @staticmethod
     def save(img):
