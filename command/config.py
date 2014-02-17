@@ -24,7 +24,8 @@ class Config(object):
 
     @property
     def dir(self):
-        return self.configfile.get('option', 'dir')
+        path = self.configfile.get('option', 'dir')
+        return os.path.expanduser(path)
 
     @dir.setter
     def dir(self, new_dir):
