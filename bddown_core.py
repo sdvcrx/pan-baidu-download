@@ -146,7 +146,7 @@ def download(args):
         if k == '--limit':
             limit = v
         elif k == '--dir':
-            output_dir = v
+            output_dir = os.path.expanduser(v)
         elif k == '--secret':
             secret = v
     links = filter(check_url, links)    # filter the wrong url

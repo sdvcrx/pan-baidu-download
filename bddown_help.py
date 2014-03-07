@@ -51,7 +51,7 @@ Download file from the Baidu pan link
 
 Options:
     --limit=[speed]             Max download speed limit.
-    --output-dir=[dir]          Download task to dir.'''
+    --dir=[dir]                 Download task to dir.
     --secret=[string]           Retrieval password'''
 
 show = '''python bddown_cli.py show [Baidupan-url]...
