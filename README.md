@@ -65,7 +65,7 @@ pan download [options] [BaiduPan-url]...
 
 Options:
     --limit=[speed]             Max download speed limit.
-    --output-dir=[dir]          Download task to dir.
+    --dir=[dir]          Download task to dir.
 ```
 
     pan download pan-baidu-url
@@ -86,7 +86,7 @@ or
 
 指定下载目录
 
-    pan download --output-dir=/home/memory/Downloads pan-baidu-url ...
+    pan download --dir=~/Downloads pan-baidu-url ...
 
 下载多个链接
 
