@@ -16,8 +16,9 @@ from command.config import configure
 
 
 class BaiduDown(object):
-    def __init__(self, raw_link):
+    def __init__(self, raw_link, secret=None):
         self.bdlink = raw_link
+        self.secret = secret
         self.cookjar = cookielib.LWPCookieJar()
         if os.access(configure.cookies, os.F_OK):
             self.cookjar.load(configure.cookies)
@@ -70,7 +71,10 @@ class BaiduDown(object):
         return json_data
 
     def _verify_passwd(self, url):
-        pwd = raw_input("请输入提取密码\n")
+        if self.secret is not None:
+            pwd = self.secret
+        else:
+            pwd = raw_input("请输入提取密码\n")
         data = "pwd=%s&vcode=" % pwd
         url = "%s&t=%d&" % (url.replace('init', 'verify'), int(time()))
         logging.debug(url)
@@ -136,16 +140,19 @@ convert_none = lambda opt, arg: opt + arg if arg else ""
 def download(args):
     limit = configure.limit
     output_dir = configure.dir
-    optlist, links = getopt.getopt(args, 'lD', ['limit=', 'dir='])
+    optlist, links = getopt.getopt(args, 'lDS', ['limit=', 'dir=', 'secret='])
+    secret = None
     for k, v in optlist:
         if k == '--limit':
             limit = v
         elif k == '--dir':
             output_dir = v
+        elif k == '--secret':
+            secret = v
     links = filter(check_url, links)    # filter the wrong url
     links = map(add_http, links)        # add 'http://'
     for url in links:
-        pan = BaiduDown(url)
+        pan = BaiduDown(url, secret)
         filename = pan.filename
         link = pan.link
         download_command(filename, link, limit=limit, output_dir=output_dir)
@@ -154,6 +161,7 @@ def download(args):
 
 
 def download_command(filename, link, limit=None, output_dir=None):
+    bool(output_dir) and not os.path.exists(output_dir) and os.makedirs(output_dir)
     print "\033[32m" + filename + "\033[0m"
     firefox_ua = 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:25.0) Gecko/20100101 Firefox/25.0'
     cmd = "aria2c -c -o '%(filename)s' -s5 -x5" \
