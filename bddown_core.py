@@ -37,7 +37,6 @@ class BaiduDown(object):
         self.timestamp = timestamp
         self.sign = sign
         if raw_link:
-            import pdb; pdb.set_trace()
             self.initialize(raw_link, secret)
 
     def _get_json(self, input_code=None, vcode=None):
