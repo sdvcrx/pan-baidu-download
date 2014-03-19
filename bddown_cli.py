@@ -32,6 +32,7 @@ def execute_command(args=sys.argv[1:]):
         'help':         bd_help,
         'login':        login,
         'download':     download,
+        'd':            download,   # alias download
         'export':       export,
         'show':         show,
         'config':       config

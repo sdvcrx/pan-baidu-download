@@ -10,7 +10,7 @@ from urllib import urlencode
 import urllib2
 import cookielib
 
-from config import configure
+from config import global_config
 
 # logging.basicConfig(level=logging.DEBUG)
 
@@ -121,11 +121,11 @@ def login(args):
         username = args[0]
         passwd = args[1]
     else:
-        username = configure.username
-        passwd = configure.password
+        username = global_config.username
+        passwd = global_config.password
     if not username and not passwd:
         raise LoginError('请输入你的帐号密码！')
-    cookies = configure.cookies
+    cookies = global_config.cookies
     account = BaiduAccount(username, passwd, cookies)
     account.login()
     print "Saving session to %s" % cookies

@@ -5,7 +5,7 @@ import json
 import urllib2
 import logging
 
-from config import configure
+from config import global_config
 from bddown_core import BaiduDown, GetFilenameError
 
 
@@ -20,7 +20,7 @@ def export(links):
 
 
 def export_single(filename, link):
-    jsonrpc_path = configure.jsonrpc
+    jsonrpc_path = global_config.jsonrpc
     if not jsonrpc_path:
         print "请设置config.ini中的jsonrpc选项"
         exit(1)

@@ -6,13 +6,14 @@ import urllib2
 import re
 import sys
 import os
+import subprocess
 import json
 import getopt
 import logging
 from time import time
 
 from util import check_url, add_http
-from command.config import configure
+from command.config import global_config
 
 
 class BaiduDown(object):
@@ -138,10 +139,10 @@ convert_none = lambda opt, arg: opt + arg if arg else ""
 
 
 def download(args):
-    limit = configure.limit
-    output_dir = configure.dir
     optlist, links = getopt.getopt(args, 'lDS', ['limit=', 'dir=', 'secret='])
     secret = None
+    limit = global_config.limit
+    output_dir = global_config.dir
     for k, v in optlist:
         if k == '--limit':
             limit = v
@@ -173,7 +174,7 @@ def download_command(filename, link, limit=None, output_dir=None):
               "dir": convert_none('--dir=', output_dir),
               "link": link
           }
-    os.system(cmd)
+    subprocess.call(cmd, shell=True)
 
 if '__main__' == __name__:
     pass
