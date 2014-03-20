@@ -8,7 +8,7 @@ import sys
 import os
 import subprocess
 import json
-import getopt
+import argparse
 import logging
 from time import time
 
@@ -162,15 +162,20 @@ convert_none = lambda opt, arg: opt + arg if arg else ""
 def download(args):
     limit = global_config.limit
     output_dir = global_config.dir
-    secret = ""
-    optlist, links = getopt.getopt(args, 'lDS', ['limit=', 'dir=', 'secret='])
-    for k, v in optlist:
-        if k == '--limit':
-            limit = v
-        elif k == '--dir':
-            output_dir = os.path.expanduser(v)
-        elif k == '--secret':
-            secret = v
+    parser = argparse.ArgumentParser(description="download command arg parser")
+    parser.add_argument('-L', '--limit', action="store", dest='limit', help="Max download speed limit.")
+    parser.add_argument('-D', '--dir', action="store", dest='output_dir', help="Download task to dir.")
+    parser.add_argument('-S', '--secret', action="store", dest='secret', help="Retrieval password.", default="")
+    if not args:
+        parser.print_help()
+        exit(1)
+    namespace, links = parser.parse_known_args(args)
+    secret = namespace.secret
+    if namespace.limit:
+        limit = namespace.limit
+    if namespace.output_dir:
+        output_dir = namespace.output_dir
+
     links = filter(check_url, links)  # filter the wrong url
     links = map(add_http, links)  # add 'http://'
     for url in links:
