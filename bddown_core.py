@@ -176,8 +176,10 @@ def download(args):
     if namespace.output_dir:
         output_dir = namespace.output_dir
 
-    links = filter(check_url, links)  # filter the wrong url
-    links = map(add_http, links)  # add 'http://'
+    # if is wap
+    links = [link.replace("wap/link", "share/link") for link in links]
+    links = filter(check_url, links)    # filter the wrong url
+    links = map(add_http, links)        # add 'http://'
     for url in links:
         pan = BaiduDown(url, secret=secret)
         filename = pan.filename
