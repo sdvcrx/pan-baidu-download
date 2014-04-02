@@ -156,8 +156,6 @@ class GetFilenameError(Exception):
     pass
 
 
-convert_none = lambda opt, arg: opt + arg if arg else ""
-
 
 def download(args):
     limit = global_config.limit

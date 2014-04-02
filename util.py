@@ -38,6 +38,8 @@ def check_url(raw_url=""):
 
 add_http = lambda url: url if url.startswith('http://') else 'http://'+url
 
+convert_none = lambda opt, arg: opt + arg if arg else ""
+
 
 # from http://stackoverflow.com/questions/287871/print-in-terminal-with-colors-using-python
 # THANKS!
