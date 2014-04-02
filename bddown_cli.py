@@ -5,7 +5,7 @@ import sys
 
 import bddown_help
 from util import *
-from bddown_core import download
+from command.download import download
 from command.show import show
 from command.login import login
 from command.config import config
