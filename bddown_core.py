@@ -1,22 +1,94 @@
 #!/usr/bin/env python2
-#!coding=utf-8
+#coding=utf-8
 
-import cookielib
-import urllib2
 import re
-import sys
 import os
-import subprocess
 import json
-import argparse
 import logging
+import urllib2
+import cookielib
 from time import time
 
-from util import check_url, add_http
+from util import convert_none
 from command.config import global_config
 
 
-class BaiduDown(object):
+class FileInfo(object):
+    """Get necessary info from javascript code by regular expression
+
+    Attributes:
+        secret (str): the password to enter secret share page.
+        bdstoken (str): token from login cookies.
+        filename (list): the filenames of download files.
+        fs_id (list): download files' ids.
+        uk (str): user number of the share file.
+        shareid (str): id of the share file.
+        timestamp (str): unix timestamp of get download page.
+        sign (str): relative to timestamp. Server will check sign and timestamp when we try to get download link.
+    """
+    def __init__(self, js):
+        self.js = js
+        self.info = {}
+        self.filenames = []
+        self.bdstoken = ""
+        self.fid_list = []
+        self.uk = ""
+        self.shareid = ""
+        self.timestamp = ""
+        self.sign = ""
+        self._get_info()
+        self._parse_json()
+
+    @staticmethod
+    def _str2dict(s):
+        return dict(
+            [i.split('=', 1) for i in s.split(';') if ('File' in i or 'disk' in i) and len(i.split('=', 1)) == 2])
+
+    def _get_info(self):
+        self.info = self._str2dict(self.js[0])
+        bdstoken_tmp = self._str2dict(self.js[1])
+        self.info['FileUtils.bdstoken'] = bdstoken_tmp.get('FileUtils.bdstoken')
+        self.shareid = self.info.get('FileUtils.share_id').strip('"')
+        self.uk = self.info.get('FileUtils.share_uk').strip('"').strip('"')
+        self.timestamp = self.info.get('FileUtils.share_timestamp').strip('"')
+        self.sign = self.info.get('FileUtils.share_sign').strip('"')
+        # self.fs_id = info.get('disk.util.ViewShareUtils.fsId').strip('"')
+        self.bdstoken = self.info.get('disk.util.ViewShareUtils.bdstoken') or self.info.get(
+            'FileUtils.bdstoken')
+        self.bdstoken = self.bdstoken.strip('"')
+        # TODO: handle null
+        # try:
+        #     self.bdstoken = info.get('disk.util.ViewShareUtils.bdstoken').strip('"')
+        # except AttributeError:
+        #     self.bdstoken = info.get('FileUtils.bdstoken').strip('"')
+
+        # TODO: md5
+        # self.md5 = info.get('disk.util.ViewShareUtils.file_md5').strip('"')
+
+    def _parse_json(self):
+        # single file
+        if self.js[0].startswith("var"):
+            # js2 = self.js[0]
+            # get json
+            # [1:-1] can remove double quote
+            d = [self.info.get('disk.util.ViewShareUtils.viewShareData').replace('\\\\', '\\').encode(
+                "unicode_escape").replace('\\', '')[1:-1]]
+        # files
+        else:
+            js2 = self.js[1]
+            pattern = re.compile("[{]\\\\[^}]+[}]{2}")
+            d = re.findall(pattern, js2)
+            # escape
+            d = [i.replace('\\\\', '\\').decode('unicode_escape').replace('\\', '') for i in d]
+        d = map(json.loads, d)
+        for i in d:
+            # TODO: handle dir
+            # i.get('isdir')
+            self.fid_list.append(i.get('fs_id'))
+            self.filenames.append(i.get('server_filename').encode('utf-8'))
+
+
+class Pan(object):
     cookjar = cookielib.LWPCookieJar()
     if os.access(global_config.cookies, os.F_OK):
         cookjar.load(global_config.cookies)
@@ -27,103 +99,29 @@ class BaiduDown(object):
         ('User-Agent', 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:26.0) Gecko/20100101 Firefox/26.0')
     ]
 
-    def __init__(self, raw_link="", filename="", bdstoken="", fs_id="", uk="", shareid="", timestamp="", sign="",
-                 secret=""):
-        self.filename = filename
-        self.bdstoken = bdstoken
-        self.fs_id = fs_id
-        self.uk = uk
-        self.shareid = shareid
-        self.timestamp = timestamp
-        self.sign = sign
-        if raw_link:
-            self.initialize(raw_link, secret)
-
-    def _get_json(self, input_code=None, vcode=None):
-        url = 'http://pan.baidu.com/share/download?channel=chunlei&clienttype=0&web=1' \
-              '&uk=%s&shareid=%s&timestamp=%s&sign=%s&bdstoken=%s%s%s' \
-              '&channel=chunlei&clienttype=0&web=1' % \
-              (self.uk, self.shareid, self.timestamp, self.sign, self.bdstoken,
-               convert_none('&input=', input_code),
-               convert_none('&vcode=', vcode))
-        post_data = 'fid_list=["%s"]' % self.fs_id
-        req = self.opener.open(url, post_data)
-        json_data = json.load(req)
-        return json_data
-
-    def initialize(self, link, secret):
-        info = ShareInfo(link, secret)
-        self.filename = info.filename
-        self.bdstoken = info.bdstoken
-        self.uk = info.uk
-        self.shareid = info.shareid
-        self.fs_id = info.fs_id
-        self.timestamp = info.timestamp
-        self.sign = info.sign
-
-    @staticmethod
-    def save(img):
-        data = urllib2.urlopen(img).read()
-        with open(os.path.dirname(os.path.abspath(__file__)) + '/vcode.jpg', mode='wb') as fp:
-            fp.write(data)
-        print "验证码已经保存至", os.path.dirname(os.path.abspath(__file__))
-
-    @property
-    def link(self):
-        data = self._get_json()
-        logging.debug(data)
-        if not data.get('errno'):
-            return data.get('dlink').encode('utf-8')
-        else:
-            vcode = data.get('vcode')
-            img = data.get('img')
-            self.save(img)
-            input_code = raw_input("请输入看到的验证码\n")
-            data = self._get_json(vcode=vcode, input_code=input_code)
-            if not data.get('errno'):
-                return data.get('dlink').encode('utf-8')
-            else:
-                raise VerificationError("验证码错误\n")
-
-
-class ShareInfo(object):
-    def __init__(self, raw_link, secret=""):
-        self.opener = BaiduDown.opener
-        self.bdlink = raw_link
+    def __init__(self, bdlink, secret=""):
         self.secret = secret
-        self.data = self._get_download_page()
-        self.filename = ""
-        self.bdstoken = ""
-        self.fs_id = ""
-        self.uk = ""
-        self.shareid = ""
-        self.timestamp = ""
-        self.sign = ""
-        self._get_info()
+        self.bdlink = bdlink
+        file_info = FileInfo(self._get_js())
+        self.filenames = file_info.filenames
+        self.bdstoken = file_info.bdstoken
+        self.fid_list = file_info.fid_list
+        self.uk = file_info.uk
+        self.shareid = file_info.shareid
+        self.timestamp = file_info.timestamp
+        self.sign = file_info.sign
 
-    def _get_download_page(self):
+    def _get_js(self):
+        """Get javascript code in html like '<script type="javascript">/*<![CDATA[*/  sth  /*]]>*/</script>
+        """
         req = self.opener.open(self.bdlink)
         if 'init' in req.url:
             self._verify_passwd(req.url)
             req = self.opener.open(self.bdlink)
         data = req.read()
-        return data
-
-    def _get_info(self):
-        pattern = re.compile('server_filename="(.+?)";disk.util.ViewShareUtils.bdstoken="(\w+)";'
-                             'disk.util.ViewShareUtils.fsId="(\d+)".+?FileUtils.share_uk="(\d+)";'
-                             'FileUtils.share_id="(\d+)";.+?FileUtils.share_timestamp="(\d+)";'
-                             'FileUtils.share_sign="(\w+)";', re.DOTALL)
-        info = re.search(pattern, self.data)
-        if not info:
-            raise IndexError("无法获取该分享文件的信息\n")
-        self.filename = info.group(1)
-        self.bdstoken = info.group(2)
-        self.fs_id = info.group(3)
-        self.uk = info.group(4)
-        self.shareid = info.group(5)
-        self.timestamp = info.group(6)
-        self.sign = info.group(7)
+        js_pattern = re.compile('<script\stype="text/javascript">/\*<!\[CDATA\[\*/(.+?)/\*\]\]>\*/</script>', re.DOTALL)
+        js = re.findall(js_pattern, data)
+        return js
 
     def _verify_passwd(self, url):
         if self.secret:
@@ -139,13 +137,59 @@ class ShareInfo(object):
         logging.debug(req.info())
         errno = json.loads(mesg).get('errno')
         if errno == -63:
-            self._vcode_handle()
+            raise UnknownError
         elif errno == -9:
             raise VerificationError("提取密码错误\n")
 
-    # TODO
-    def _vcode_handle(self):
-        raise VerificationError("提取密码错误\n")
+    def _get_json(self, fs_id, input_code=None, vcode=None):
+        """Post fs_id to get json of real download links"""
+        url = 'http://pan.baidu.com/share/download?channel=chunlei&clienttype=0&web=1' \
+              '&uk=%s&shareid=%s&timestamp=%s&sign=%s&bdstoken=%s%s%s' \
+              '&channel=chunlei&clienttype=0&web=1' % \
+              (self.uk, self.shareid, self.timestamp, self.sign, self.bdstoken,
+               convert_none('&input=', input_code),
+               convert_none('&vcode=', vcode))
+        logging.debug(url)
+        post_data = 'fid_list=["%s"]' % fs_id
+        logging.debug(post_data)
+        req = self.opener.open(url, post_data)
+        json_data = json.load(req)
+        return json_data
+
+    @staticmethod
+    def save(img):
+        data = urllib2.urlopen(img).read()
+        with open(os.path.dirname(os.path.abspath(__file__)) + '/vcode.jpg', mode='wb') as fp:
+            fp.write(data)
+        print "验证码已经保存至", os.path.dirname(os.path.abspath(__file__))
+
+    # TODO: Cacahe support (decorator)
+    # TODO: Save download satatus
+    def _get_link(self, fs_id):
+        """Get real download link by fs_id( file's id)"""
+        data = self._get_json(fs_id)
+        logging.debug(data)
+        if not data.get('errno'):
+            return data.get('dlink').encode('utf-8')
+        elif data.get('errno') == -19:
+            vcode = data.get('vcode')
+            img = data.get('img')
+            self.save(img)
+            input_code = raw_input("请输入看到的验证码\n")
+            data = self._get_json(fs_id, vcode=vcode, input_code=input_code)
+            if not data.get('errno'):
+                return data.get('dlink').encode('utf-8')
+            else:
+                raise VerificationError("验证码错误\n")
+        else:
+            raise UnknownError
+
+    @property
+    def info(self):
+        fs_id = self.fid_list.pop()
+        filename = self.filenames.pop()
+        link = self._get_link(fs_id)
+        return link, filename, len(self.fid_list)
 
 
 class VerificationError(Exception):
@@ -156,51 +200,9 @@ class GetFilenameError(Exception):
     pass
 
 
-
-def download(args):
-    limit = global_config.limit
-    output_dir = global_config.dir
-    parser = argparse.ArgumentParser(description="download command arg parser")
-    parser.add_argument('-L', '--limit', action="store", dest='limit', help="Max download speed limit.")
-    parser.add_argument('-D', '--dir', action="store", dest='output_dir', help="Download task to dir.")
-    parser.add_argument('-S', '--secret', action="store", dest='secret', help="Retrieval password.", default="")
-    if not args:
-        parser.print_help()
-        exit(1)
-    namespace, links = parser.parse_known_args(args)
-    secret = namespace.secret
-    if namespace.limit:
-        limit = namespace.limit
-    if namespace.output_dir:
-        output_dir = namespace.output_dir
-
-    # if is wap
-    links = [link.replace("wap/link", "share/link") for link in links]
-    links = filter(check_url, links)    # filter the wrong url
-    links = map(add_http, links)        # add 'http://'
-    for url in links:
-        pan = BaiduDown(url, secret=secret)
-        filename = pan.filename
-        link = pan.link
-        download_command(filename, link, limit=limit, output_dir=output_dir)
-
-    sys.exit(0)
+class UnknownError(Exception):
+    pass
 
 
-def download_command(filename, link, limit=None, output_dir=None):
-    bool(output_dir) and not os.path.exists(output_dir) and os.makedirs(output_dir)
-    print "\033[32m" + filename + "\033[0m"
-    firefox_ua = 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:25.0) Gecko/20100101 Firefox/25.0'
-    cmd = "aria2c -c -o '%(filename)s' -s5 -x5" \
-          " --user-agent='%(useragent)s' --header 'Referer:http://pan.baidu.com/disk/home'" \
-          " %(limit)s %(dir)s '%(link)s'" % {
-              "filename": filename,
-              "useragent": firefox_ua,
-              "limit": convert_none('--max-download-limit=', limit),
-              "dir": convert_none('--dir=', output_dir),
-              "link": link
-          }
-    subprocess.call(cmd, shell=True)
-
-if '__main__' == __name__:
+if __name__ == '__main__':
     pass
