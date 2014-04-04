@@ -71,7 +71,7 @@ class FileInfo(object):
             # js2 = self.js[0]
             # get json
             # [1:-1] can remove double quote
-            d = [self.info.get('disk.util.ViewShareUtils.viewShareData').replace('\\\\', '\\').encode(
+            d = [self.info.get('disk.util.ViewShareUtils.viewShareData').replace('\\\\', '\\').decode(
                 "unicode_escape").replace('\\', '')[1:-1]]
         # files
         else:
