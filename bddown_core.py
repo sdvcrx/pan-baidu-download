@@ -77,16 +77,47 @@ class FileInfo(object):
         # files
         else:
             js2 = self.js[1]
-            pattern = re.compile("[{]\\\\[^}]+[}]{2}")
+            pattern = re.compile("[{]\\\\[^}]+[}]+")
             d = re.findall(pattern, js2)
             # escape
             d = [i.replace('\\\\', '\\').decode('unicode_escape').replace('\\', '') for i in d]
         d = map(json.loads, d)
         for i in d:
-            # TODO: handle dir
-            # i.get('isdir')
+            # if wrong json
+            if i.get('fs_id') is None:
+                continue
+            if i.get('isdir') == '1':
+                seq = self._get_folder(i.get('path'))
+                for k, j in seq:
+                    self.filenames.append(k)
+                    self.fid_list.append(j)
+                continue
             self.fid_list.append(i.get('fs_id'))
             self.filenames.append(i.get('server_filename').encode('utf-8'))
+
+    def _get_folder(self, path):
+        # 13 digit unix timestamp
+        seq = []
+        t1 = int(time() * 1000)
+        t2 = t1 + 6
+        # interval
+        tt = 1.03
+        url = "http://pan.baidu.com/share/list?channel=chunlei&clienttype=0&web=1&num=100&t=%(t1)d" \
+              "&page=1&dir=%(path)s&t=%(tt)d&uk=%(uk)s&shareid=%(shareid)s&order=time&desc=1" \
+              "&_=%(t2)d&bdstoken=%(bdstoken)s" % {
+                  't1': t1,
+                  'path': path,
+                  'tt': tt,
+                  'uk': self.uk,
+                  'shareid': self.shareid,
+                  't2': t2,
+                  'bdstoken': self.bdstoken
+              }
+        html = Pan.opener.open(url)
+        j = json.load(html)
+        for i in j.get('list', []):
+            seq.append((i.get('server_filename'), i.get('fs_id')))
+        return seq
 
 
 class Pan(object):
