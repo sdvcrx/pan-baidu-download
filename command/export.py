@@ -6,17 +6,18 @@ import urllib2
 import logging
 
 from config import global_config
-from bddown_core import BaiduDown, GetFilenameError
+from bddown_core import Pan, GetFilenameError
 
 
 def export(links):
     for link in links:
-        pan = BaiduDown(link)
-        filename = pan.filename
-        dlink = pan.link
-        if not filename and not dlink:
-            raise GetFilenameError("无法获取下载地址或文件名！")
-        export_single(filename, dlink)
+        pan = Pan(link)
+        count = 1
+        while count != 0:
+            link, filename, count = pan.info
+            if not filename and not link:
+                raise GetFilenameError("无法获取下载地址或文件名！")
+            export_single(filename, link)
 
 
 def export_single(filename, link):
@@ -36,7 +37,7 @@ def export_single(filename, link):
                     "header": "User-Agent: Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:25.0) Gecko/20100101 Firefox/25.0"
                               "\r\nReferer:http://pan.baidu.com/disk/home"
                 }]
-         }]
+        }]
     )
     logging.debug(jsonreq)
     try:
