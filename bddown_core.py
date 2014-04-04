@@ -26,6 +26,7 @@ class FileInfo(object):
         timestamp (str): unix timestamp of get download page.
         sign (str): relative to timestamp. Server will check sign and timestamp when we try to get download link.
     """
+
     def __init__(self, js):
         self.js = js
         self.info = {}
@@ -62,8 +63,8 @@ class FileInfo(object):
         # except AttributeError:
         #     self.bdstoken = info.get('FileUtils.bdstoken').strip('"')
 
-        # TODO: md5
-        # self.md5 = info.get('disk.util.ViewShareUtils.file_md5').strip('"')
+            # TODO: md5
+            # self.md5 = info.get('disk.util.ViewShareUtils.file_md5').strip('"')
 
     def _parse_json(self):
         # single file
@@ -112,8 +113,7 @@ class Pan(object):
         self.sign = file_info.sign
 
     def _get_js(self):
-        """Get javascript code in html like '<script type="javascript">/*<![CDATA[*/  sth  /*]]>*/</script>
-        """
+        """Get javascript code in html like '<script type="javascript">/*<![CDATA[*/  sth  /*]]>*/</script>"""
         req = self.opener.open(self.bdlink)
         if 'init' in req.url:
             self._verify_passwd(req.url)
@@ -164,7 +164,7 @@ class Pan(object):
         print "验证码已经保存至", os.path.dirname(os.path.abspath(__file__))
 
     # TODO: Cacahe support (decorator)
-    # TODO: Save download satatus
+    # TODO: Save download status
     def _get_link(self, fs_id):
         """Get real download link by fs_id( file's id)"""
         data = self._get_json(fs_id)
