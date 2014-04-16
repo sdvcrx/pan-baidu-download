@@ -5,6 +5,10 @@ pan-baidu-download
 
 **更新记录：**
 
+[14-04-16]
+
+支持多文件和文件夹下载
+
 [14-02-09]
 
 支持输入提取密码
@@ -15,17 +19,6 @@ pan-baidu-download
 
 *慎用此功能，获取到的链接有可能会因时间过长而失效*
 
-[14-01-24]
-
-已支持登录！请在 config.ini 中填写帐号密码或使用 `pan config username [Your username]` 和 `pan config password [password]` 填入帐号密码，并用 `pan login` 进行登录
-
- 在浏览器打开验证码功能已经移除，暂时不支持多文件下载
-
-[13-12-24]
-
-限速的问题好像解决了，在我这里测试能到满速
-
-[参考链接](http://userscripts.org/topics/136081)
 
 ### 要求
 
@@ -131,14 +124,14 @@ JsonRPC
 在此环境下测试通过
 
 ```
-$ uname -a
-Linux banbanchs 3.12.8-1-ARCH #1 SMP PREEMPT Thu Jan 16 09:16:34 CET 2014 x86_64 GNU/Linux
+$ uname -r
+3.14.1-1-ARCH
 $ aria2c --version
-aria2 version 1.18.3
+aria2 version 1.18.5
 $ python -V
 Python 2.7.6
 $ date -I
-2014-01-24
+2014-04-16
 ```
 
 
@@ -151,6 +144,14 @@ $ date -I
 - ~~指定下载目录~~
 
 - ~~配置文件支持~~
+
+- ~~多文件下载~~
+
+- Cache
+
+- Log
+
+- Home List
 
 - 编码完善
 
