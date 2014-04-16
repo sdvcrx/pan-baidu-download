@@ -4,7 +4,7 @@ import sys
 import argparse
 import subprocess
 
-from core import Pan
+from bddown_core import Pan
 from util import convert_none, check_url, add_http
 from config import global_config
 
