@@ -57,11 +57,12 @@ class FileInfo(object):
         self.bdstoken = self.info.get('disk.util.ViewShareUtils.bdstoken') or self.info.get(
             'FileUtils.bdstoken')
         self.bdstoken = self.bdstoken.strip('"')
-        # TODO: handle null
-        # try:
-        #     self.bdstoken = info.get('disk.util.ViewShareUtils.bdstoken').strip('"')
-        # except AttributeError:
-        #     self.bdstoken = info.get('FileUtils.bdstoken').strip('"')
+        if self.bdstoken == "null":
+            self.bdstoken = None
+            # try:
+            #     self.bdstoken = info.get('disk.util.ViewShareUtils.bdstoken').strip('"')
+            # except AttributeError:
+            #     self.bdstoken = info.get('FileUtils.bdstoken').strip('"')
 
             # TODO: md5
             # self.md5 = info.get('disk.util.ViewShareUtils.file_md5').strip('"')
@@ -175,9 +176,10 @@ class Pan(object):
     def _get_json(self, fs_id, input_code=None, vcode=None):
         """Post fs_id to get json of real download links"""
         url = 'http://pan.baidu.com/share/download?channel=chunlei&clienttype=0&web=1' \
-              '&uk=%s&shareid=%s&timestamp=%s&sign=%s&bdstoken=%s%s%s' \
+              '&uk=%s&shareid=%s&timestamp=%s&sign=%s%s%s%s' \
               '&channel=chunlei&clienttype=0&web=1' % \
-              (self.uk, self.shareid, self.timestamp, self.sign, self.bdstoken,
+              (self.uk, self.shareid, self.timestamp, self.sign,
+               convert_none('&bdstoken=', self.bdstoken),
                convert_none('&input=', input_code),
                convert_none('&vcode=', vcode))
         logging.debug(url)
