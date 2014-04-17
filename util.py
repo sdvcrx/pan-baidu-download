@@ -1,7 +1,17 @@
 #!/usr/bin/env python2
-#!coding=utf-8
+# coding=utf-8
 
 import bddown_help
+
+__all__ = [
+    "bd_help",
+    "usage",
+    "check_url",
+    "add_http",
+    "convert_none",
+    "bcolor",
+    "in_list",
+]
 
 URL = ['pan.baidu.com', 'yun.baidu.com']
 FILTER_KEYS = ['shareid', 'server_filename', 'isdir', 'fs_id', 'sign', 'time_stamp', 'shorturl', 'dlink',
