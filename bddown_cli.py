@@ -4,7 +4,7 @@
 import sys
 
 import bddown_help
-from util import *
+from util import bd_help, usage
 from command.download import download
 from command.show import show
 from command.login import login

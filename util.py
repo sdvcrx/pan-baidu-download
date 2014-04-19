@@ -1,12 +1,14 @@
 #!/usr/bin/env python2
 # coding=utf-8
 
+import urlparse
+
 import bddown_help
 
 __all__ = [
     "bd_help",
     "usage",
-    "check_url",
+    "parse_url"
     "add_http",
     "convert_none",
     "bcolor",
@@ -37,14 +39,37 @@ def usage(doc=bddown_help.usage, message=None):
     print doc.strip()
 
 
-def check_url(raw_url=""):
-    raw_url.lower()
-    if raw_url.startswith('http://'):
-        raw_url = raw_url[7:]
-    rev = raw_url.rstrip('/').split('/')
-    if rev[0] in URL and len(rev) > 1:
-        return True
-    return False
+def parse_url(url):
+    """This function will parse url and judge which type the link is.
+
+    Args:
+      url (str): the url user input.
+
+    Returns:
+      type (dict): 1 -> link, 2 -> album, 3 -> home, 0 -> unknown, -1 -> error
+    """
+    result = urlparse.urlparse(url)
+
+    # wrong url
+    if result.netloc not in ('pan.baidu.com', 'yun.baidu.com'):
+        return {'type': -1}
+
+    # http://pan.baidu.com/s/1kTFQbIn or http://pan.baidu.com/share/link?shareid=2009678541&uk=2839544145
+    if result.path.startswith('/s/') or ('link' in result.path):
+        return {'type': 1}
+
+    # http://pan.baidu.com/pcloud/album/info?uk=3943531277&album_id=1553987381796453514
+    elif 'album' in result.path:
+        info = dict(urlparse.parse_qsl(result.query))
+        info['type'] = 2
+        return info
+
+    # TODO: download share home
+    # http://pan.baidu.com/share/home?uk=NUMBER
+    elif 'home' in result.path and result.query:
+        return {'type': 3}
+    else:
+        return {'type': 0}
 
 add_http = lambda url: url if url.startswith('http://') else 'http://'+url
 

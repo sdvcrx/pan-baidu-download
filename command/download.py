@@ -5,7 +5,7 @@ import argparse
 import subprocess
 
 from bddown_core import Pan
-from util import convert_none, check_url, add_http
+from util import convert_none, parse_url, add_http
 from config import global_config
 
 
@@ -44,7 +44,6 @@ def download(args):
 
     # if is wap
     links = [link.replace("wap/link", "share/link") for link in links]
-    links = filter(check_url, links)    # filter the wrong url
     links = map(add_http, links)        # add 'http://'
     for url in links:
         pan = Pan(url, secret=secret)
