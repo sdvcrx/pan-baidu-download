@@ -225,6 +225,46 @@ class Pan(object):
         return link, filename, len(self.fid_list)
 
 
+class Album(object):
+    def __init__(self, album_id, uk):
+        self._album_id = album_id
+        self._uk = uk
+        self._limit = 100
+        self._filename = []
+        self._links = []
+        self._get_info()
+
+    def __len__(self):
+        return len(self._links)
+
+    def _get_info(self):
+        url = "http://pan.baidu.com/pcloud/album/listfile?album_id={album_id}&query_uk={uk}&start=0&limit={limit}" \
+              "&channel=chunlei&clienttype=0&web=1".format(album_id=self._album_id, uk=self._uk, limit=self._limit)
+        res = Pan.opener.open(url)
+        data = json.load(res)
+        if not data.get('errno'):
+            filelist = data.get('list')
+            for i in filelist:
+                # if is dir, ignore it
+                if i.get('isdir'):
+                    continue
+                else:
+                    self._filename.append(i.get('server_filename'))
+                    self._links.append(i.get('dlink'))
+                    # TODO: md5
+                    # self._md5.append(i.get('md5'))
+                    # size
+                    # self._size.append(i.get('size'))
+        else:
+            raise UnknownError
+
+    @property
+    def info(self):
+        filename = self._filename.pop()
+        link = self._links.pop()
+        return link, filename, len(self)
+
+
 class VerificationError(Exception):
     pass
 

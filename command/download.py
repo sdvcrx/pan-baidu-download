@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
 import sys
+import logging
 import argparse
 import subprocess
 
-from bddown_core import Pan
+from bddown_core import Pan, Album
 from util import convert_none, parse_url, add_http
 from config import global_config
 
@@ -46,10 +47,31 @@ def download(args):
     links = [link.replace("wap/link", "share/link") for link in links]
     links = map(add_http, links)        # add 'http://'
     for url in links:
-        pan = Pan(url, secret=secret)
-        count = 1
-        while count != 0:
-            link, filename, count = pan.info
-            download_command(filename, link, limit=limit, output_dir=output_dir)
+        res = parse_url(url)
+        # normal
+        if res.get('type') == 1:
+            pan = Pan(url, secret=secret)
+            count = 1
+            while count != 0:
+                link, filename, count = pan.info
+                download_command(filename, link, limit=limit, output_dir=output_dir)
+
+        # album
+        elif res.get('type') == 2:
+            album_id = res.get('album_id')
+            uk = res.get('uk')
+            album = Album(album_id, uk)
+            count = 1
+            while count != 0:
+                link, filename, count = album.info
+                download_command(filename, link, limit=limit, output_dir=output_dir)
+        # home
+        elif res.get('type') == 3:
+            raise NotImplementedError('This function has not implemented.')
+        elif res.get('type') == 0:
+            logging.debug(url)
+            continue
+        else:
+            continue
 
     sys.exit(0)
