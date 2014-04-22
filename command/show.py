@@ -13,5 +13,5 @@ def show(links):
             count = 1
             while count != 0:
                 link, filename, count = pan.info
-                print "%s\n%s\n\n" % (filename, link)
+                print "{0}\n{1}\n\n".format(filename, link)
     sys.exit(0)

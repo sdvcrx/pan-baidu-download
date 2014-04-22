@@ -103,17 +103,10 @@ class FileInfo(object):
         t2 = t1 + 6
         # interval
         tt = 1.03
-        url = "http://pan.baidu.com/share/list?channel=chunlei&clienttype=0&web=1&num=100&t=%(t1)d" \
-              "&page=1&dir=%(path)s&t=%(tt)d&uk=%(uk)s&shareid=%(shareid)s&order=time&desc=1" \
-              "&_=%(t2)d&bdstoken=%(bdstoken)s" % {
-                  't1': t1,
-                  'path': path,
-                  'tt': tt,
-                  'uk': self.uk,
-                  'shareid': self.shareid,
-                  't2': t2,
-                  'bdstoken': self.bdstoken
-              }
+        url = "http://pan.baidu.com/share/list?channel=chunlei&clienttype=0&web=1&num=100&t={t1}" \
+              "&page=1&dir={path}&t={tt}d&uk={self.uk}&shareid={self.shareid}&order=time&desc=1" \
+              "&_={t2}&bdstoken={self.bdstoken}".format(t1=t1, path=path, tt=tt, self=self, t2=t2)
+        logging.debug(url)
         html = Pan.opener.open(url)
         j = json.load(html)
         for i in j.get('list', []):
@@ -160,8 +153,8 @@ class Pan(object):
             pwd = self.secret
         else:
             pwd = raw_input("请输入提取密码\n")
-        data = "pwd=%s&vcode=" % pwd
-        url = "%s&t=%d&" % (url.replace('init', 'verify'), int(time()))
+        data = "pwd={0}&vcode=".format(pwd)
+        url = "{0}&t={1}&".format(url.replace('init', 'verify'), int(time()))
         logging.debug(url)
         req = self.opener.open(url, data=data)
         mesg = req.read()
@@ -176,14 +169,13 @@ class Pan(object):
     def _get_json(self, fs_id, input_code=None, vcode=None):
         """Post fs_id to get json of real download links"""
         url = 'http://pan.baidu.com/share/download?channel=chunlei&clienttype=0&web=1' \
-              '&uk=%s&shareid=%s&timestamp=%s&sign=%s%s%s%s' \
-              '&channel=chunlei&clienttype=0&web=1' % \
-              (self.uk, self.shareid, self.timestamp, self.sign,
-               convert_none('&bdstoken=', self.bdstoken),
-               convert_none('&input=', input_code),
-               convert_none('&vcode=', vcode))
+              '&uk={self.uk}&shareid={self.shareid}&timestamp={self.timestamp}&sign={slef.sign}{bdstoken}{input}' \
+              '{vcode}&channel=chunlei&clienttype=0&web=1'.format(self=self,
+                                                                  bdstoken=convert_none('&bdstoken=', self.bdstoken),
+                                                                  input=convert_none('&input=', input_code),
+                                                                  convert_none('&vcode=', vcode))
         logging.debug(url)
-        post_data = 'fid_list=["%s"]' % fs_id
+        post_data = 'fid_list=["{}"]'.format(fs_id)
         logging.debug(post_data)
         req = self.opener.open(url, post_data)
         json_data = json.load(req)
@@ -238,8 +230,8 @@ class Album(object):
         return len(self._links)
 
     def _get_info(self):
-        url = "http://pan.baidu.com/pcloud/album/listfile?album_id={album_id}&query_uk={uk}&start=0&limit={limit}" \
-              "&channel=chunlei&clienttype=0&web=1".format(album_id=self._album_id, uk=self._uk, limit=self._limit)
+        url = "http://pan.baidu.com/pcloud/album/listfile?album_id={self._album_id}&query_uk={self._uk}&start=0" \
+              "&limit={self._limit}&channel=chunlei&clienttype=0&web=1".format(self=self)
         res = Pan.opener.open(url)
         data = json.load(res)
         if not data.get('errno'):

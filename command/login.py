@@ -32,9 +32,10 @@ class BaiduAccount(object):
             urllib2.HTTPCookieProcessor(self.cj)
         )
         self.codestring = ''
-        self.time = int(time())
+        self._time = int(time())
         self._check_url = 'https://passport.baidu.com/v2/api/?logincheck&callback=bdPass.api.login._needCodestring' \
-                          'CheckCallback&tpl=mn&charset=utf-8&index=0&username=%s&time=%d'
+                          'CheckCallback&tpl=mn&charset=utf-8&index=0' \
+                          '&username={self.username}&time={self._time}'.format(self=self)
         self._token_url = 'https://passport.baidu.com/v2/api/?getapi&class=login&tpl=mn&tangram=true'
         self._post_url = 'https://passport.baidu.com/v2/api/?login'
         # debug:
@@ -51,7 +52,7 @@ class BaiduAccount(object):
         logging.debug(self.baiduid)
 
     def _check_verify_code(self):
-        r = self.opener.open(self._check_url % (self.username, self.time))
+        r = self.opener.open(self._check_url)
         s = r.read()
         data = json.loads(s[s.index('{'):-1])
         logging.debug(data)
@@ -128,4 +129,4 @@ def login(args):
     cookies = global_config.cookies
     account = BaiduAccount(username, passwd, cookies)
     account.login()
-    print "Saving session to %s" % cookies
+    print "Saving session to {}".format(cookies)

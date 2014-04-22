@@ -49,17 +49,17 @@ global_config = Config()
 def config(configuration):
     if len(configuration) == 0:
         for k, v in global_config.config.iteritems():
-            print '%s -> %s' % (k, v)
+            print '{0} -> {1}'.format(k, v)
     elif configuration[0] == 'delete':
         global_config.delete(configuration[1])
-        print 'Successfully delete %s' % configuration[1]
+        print 'Successfully delete {}'.format(configuration[1])
     elif configuration[0] in command:
         try:
             global_config.put(configuration[0], configuration[1])
         except IndexError:
             # avoid like this case
             # $ pan config limit
-            raise IndexError('Please input value of %s!' % configuration[0])
+            raise IndexError('Please input value of {}!'.format(configuration[0]))
         print 'Saving configuration to config.ini'
     else:
         raise TypeError('修改配置错误')

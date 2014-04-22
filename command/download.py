@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import sys
 import logging
 import argparse
@@ -14,15 +15,11 @@ def download_command(filename, link, limit=None, output_dir=None):
     bool(output_dir) and not os.path.exists(output_dir) and os.makedirs(output_dir)
     print "\033[32m" + filename + "\033[0m"
     firefox_ua = 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:25.0) Gecko/20100101 Firefox/25.0'
-    cmd = "aria2c -c -o '%(filename)s' -s5 -x5" \
-          " --user-agent='%(useragent)s' --header 'Referer:http://pan.baidu.com/disk/home'" \
-          " %(limit)s %(dir)s '%(link)s'" % {
-              "filename": filename,
-              "useragent": firefox_ua,
-              "limit": convert_none('--max-download-limit=', limit),
-              "dir": convert_none('--dir=', output_dir),
-              "link": link
-          }
+    cmd = "aria2c -c -o '{filename}' -s5 -x5" \
+          " --user-agent='{useragent}' --header 'Referer:http://pan.baidu.com/disk/home'" \
+          " {limit} {dir} '{link}'".format(filename=filename, useragent=firefox_ua, link=link,
+                                           limit=convert_none('--max-download-limit=', limit),
+                                           dir=convert_none('--dir=', output_dir))
     subprocess.call(cmd, shell=True)
 
 
