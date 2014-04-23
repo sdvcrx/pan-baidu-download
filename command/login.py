@@ -56,8 +56,7 @@ class BaiduAccount(object):
         s = r.read()
         data = json.loads(s[s.index('{'):-1])
         logging.debug(data)
-        # TODO
-        # 验证码
+        # TODO: 验证码
         if data.get('errno'):
             self.codestring = data.get('codestring')
 
@@ -89,8 +88,7 @@ class BaiduAccount(object):
         self._get_badidu_uid()
         self._check_verify_code()
         if self.codestring:
-            # TODO
-            # 验证码处理
+            # TODO: 验证码处理
             pass
         self._get_token()
         self._post_data()
