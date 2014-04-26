@@ -169,11 +169,11 @@ class Pan(object):
     def _get_json(self, fs_id, input_code=None, vcode=None):
         """Post fs_id to get json of real download links"""
         url = 'http://pan.baidu.com/share/download?channel=chunlei&clienttype=0&web=1' \
-              '&uk={self.uk}&shareid={self.shareid}&timestamp={self.timestamp}&sign={slef.sign}{bdstoken}{input}' \
+              '&uk={self.uk}&shareid={self.shareid}&timestamp={self.timestamp}&sign={self.sign}{bdstoken}{input_code}' \
               '{vcode}&channel=chunlei&clienttype=0&web=1'.format(self=self,
                                                                   bdstoken=convert_none('&bdstoken=', self.bdstoken),
-                                                                  input=convert_none('&input=', input_code),
-                                                                  convert_none('&vcode=', vcode))
+                                                                  input_code=convert_none('&input=', input_code),
+                                                                  vcode=convert_none('&vcode=', vcode))
         logging.debug(url)
         post_data = 'fid_list=["{}"]'.format(fs_id)
         logging.debug(post_data)
