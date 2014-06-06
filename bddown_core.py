@@ -68,6 +68,7 @@ class FileInfo(object):
             # self.md5 = info.get('disk.util.ViewShareUtils.file_md5').strip('"')
 
     def _parse_json(self):
+        """Try parse json from javascript code."""
         # single file
         if self.js[0].startswith("var"):
             # js2 = self.js[0]
@@ -149,6 +150,7 @@ class Pan(object):
         return js
 
     def _verify_passwd(self, url):
+        """Verify password if url is a private sharing"""
         if self.secret:
             pwd = self.secret
         else:
@@ -183,6 +185,7 @@ class Pan(object):
 
     @staticmethod
     def save(img):
+        """Download vcode image."""
         data = urllib2.urlopen(img).read()
         with open(os.path.dirname(os.path.abspath(__file__)) + '/vcode.jpg', mode='wb') as fp:
             fp.write(data)
@@ -230,6 +233,7 @@ class Album(object):
         return len(self._links)
 
     def _get_info(self):
+        """Get album's files info which has filename and download link. (And md5, file size)"""
         url = "http://pan.baidu.com/pcloud/album/listfile?album_id={self._album_id}&query_uk={self._uk}&start=0" \
               "&limit={self._limit}&channel=chunlei&clienttype=0&web=1".format(self=self)
         res = Pan.opener.open(url)
