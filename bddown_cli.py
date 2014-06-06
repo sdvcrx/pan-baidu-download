@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 # coding=utf-8
+from __future__ import print_function
 
 import sys
 
@@ -22,7 +23,7 @@ def execute_command(args=sys.argv[1:]):
         if command in ('-h', '--help'):
             usage(bddown_help.show_help())
         elif command in ('-V', '-v', '--version'):
-            print 'V1.54'
+            print('V1.6')
         else:
             usage()
             sys.exit(1)
