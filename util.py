@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 # coding=utf-8
+from __future__ import print_function
 
 import urlparse
 
@@ -35,8 +36,8 @@ def usage(doc=bddown_help.usage, message=None):
     if hasattr(doc, '__call__'):
         doc = doc()
     if message:
-        print message
-    print doc.strip()
+        print(message)
+    print(doc.strip())
 
 
 def parse_url(url):

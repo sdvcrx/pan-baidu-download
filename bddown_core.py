@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 # coding=utf-8
+from __future__ import print_function
 
 import re
 import os
@@ -189,7 +190,7 @@ class Pan(object):
         data = urllib2.urlopen(img).read()
         with open(os.path.dirname(os.path.abspath(__file__)) + '/vcode.jpg', mode='wb') as fp:
             fp.write(data)
-        print "验证码已经保存至", os.path.dirname(os.path.abspath(__file__))
+        print("验证码已经保存至", os.path.dirname(os.path.abspath(__file__)))
 
     # TODO: Cacahe support (decorator)
     # TODO: Save download status
