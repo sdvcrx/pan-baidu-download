@@ -4,6 +4,7 @@
 import json
 import urllib2
 import logging
+import base64
 
 from config import global_config
 from bddown_core import Pan, GetFilenameError
@@ -22,6 +23,8 @@ def export(links):
 
 def export_single(filename, link):
     jsonrpc_path = global_config.jsonrpc
+    jsonrpc_user = global_config.jsonrpc_user
+    jsonrpc_pass = global_config.jsonrpc_pass
     if not jsonrpc_path:
         print "请设置config.ini中的jsonrpc选项"
         exit(1)
@@ -41,8 +44,14 @@ def export_single(filename, link):
     )
     logging.debug(jsonreq)
     try:
-        req = urllib2.urlopen(jsonrpc_path, jsonreq)
-    except urllib2.URLError:
+        request = urllib2.Request(jsonrpc_path)
+        if jsonrpc_user and jsonrpc_pass:
+	    base64string = base64.encodestring('%s:%s' % (jsonrpc_user, jsonrpc_pass)).replace('\n', '')
+            request.add_header("Authorization", "Basic %s" % base64string)
+        request.add_data(jsonreq)
+        req = urllib2.urlopen(request)
+    except urllib2.URLError as urle:
+        print urle
         raise JsonrpcError("jsonrpc无法连接，请检查jsonrpc地址是否有误！")
     if req.code == 200:
         print "已成功添加到jsonrpc\n"
