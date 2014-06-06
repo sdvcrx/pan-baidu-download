@@ -46,7 +46,7 @@ def export_single(filename, link):
     try:
         request = urllib2.Request(jsonrpc_path)
         if jsonrpc_user and jsonrpc_pass:
-	    base64string = base64.encodestring('%s:%s' % (jsonrpc_user, jsonrpc_pass)).replace('\n', '')
+            base64string = base64.encodestring('%s:%s' % (jsonrpc_user, jsonrpc_pass)).replace('\n', '')
             request.add_header("Authorization", "Basic %s" % base64string)
         request.add_data(jsonreq)
         req = urllib2.urlopen(request)
