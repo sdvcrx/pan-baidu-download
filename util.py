@@ -40,13 +40,12 @@ def usage(doc=bddown_help.usage, message=None):
 
 
 def parse_url(url):
-    """This function will parse url and judge which type the link is.
+    """
+    This function will parse url and judge which type the link is.
 
-    Args:
-      url (str): the url user input.
-
-    Returns:
-      type (dict): 1 -> link, 2 -> album, 3 -> home, 0 -> unknown, -1 -> error
+    :type url: str
+    :param url: baidu netdisk share url.
+    :return: dict
     """
     result = urlparse.urlparse(url)
 

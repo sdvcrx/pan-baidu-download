@@ -12,7 +12,7 @@ import cookielib
 
 from config import global_config
 
-# logging.basicConfig(level=logging.DEBUG)
+__all__ = ['login']
 
 
 class BaiduAccount(object):
@@ -22,6 +22,17 @@ class BaiduAccount(object):
     }
 
     def __init__(self, username, passwd, cookie_filename):
+        """
+        Login and save cookies to file.
+
+        :type username: str
+        :type passwd: str
+        :type cookie_filename: str
+        :param username: Baidu username.
+        :param passwd: Baidu account password.
+        :param cookie_filename: cookies file name.
+        :return: None
+        """
         self.username = username
         self.passwd = passwd
         self.cookie_filename = cookie_filename
@@ -45,6 +56,7 @@ class BaiduAccount(object):
         self.bduss = ''
 
     def _get_baidu_uid(self):
+        """Get BAIDUID."""
         self.opener.open('http://www.baidu.com')
         for cookie in self.cj:
             if cookie.name == 'BAIDUID':
@@ -52,6 +64,7 @@ class BaiduAccount(object):
         logging.debug(self.baiduid)
 
     def _check_verify_code(self):
+        """Check if login need to input verify code."""
         r = self.opener.open(self._check_url)
         s = r.read()
         data = json.loads(s[s.index('{'):-1])
@@ -61,6 +74,7 @@ class BaiduAccount(object):
             self.codestring = data.get('codestring')
 
     def _get_token(self):
+        """Get bdstoken."""
         r = self.opener.open(self._token_url)
         s = r.read()
         try:
@@ -70,6 +84,7 @@ class BaiduAccount(object):
             raise GetTokenError("Can't get the token")
 
     def _post_data(self):
+        """Post login form."""
         post_data = {'ppui_logintime': '9379', 'charset': 'utf-8', 'codestring': '', 'token': self.token,
                      'isPhone': 'false', 'index': '0', 'u': '', 'safeflg': 0,
                      'staticpage': 'http://www.baidu.com/cache/user/html/jump.html', 'loginType': '1', 'tpl': 'mn',
@@ -97,7 +112,7 @@ class BaiduAccount(object):
             raise LoginError('登陆异常')
 
     def load_cookies_from_file(self):
-        # if cookie exist
+        """Load cookies file if file exist."""
         if os.access(self.cookie_filename, os.F_OK):
             self.cj.load()
             for cookie in self.cj:
@@ -116,6 +131,14 @@ class LoginError(Exception):
 
 
 def login(args):
+    """
+    Login.
+
+    :type args: list or tuple
+    :param args: username and password or emtyp.
+    :raise LoninError: if username or passwd is empty.
+    :return: None
+    """
     if args:
         username = args[0]
         passwd = args[1]
@@ -127,4 +150,4 @@ def login(args):
     cookies = global_config.cookies
     account = BaiduAccount(username, passwd, cookies)
     account.login()
-    print "Saving session to {}".format(cookies)
+    print("Saving session to {}".format(cookies))
