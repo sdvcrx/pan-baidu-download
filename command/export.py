@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 # coding=utf-8
+from __future__ import print_function
 
 import json
 import urllib2
@@ -26,7 +27,7 @@ def export_single(filename, link):
     jsonrpc_user = global_config.jsonrpc_user
     jsonrpc_pass = global_config.jsonrpc_pass
     if not jsonrpc_path:
-        print "请设置config.ini中的jsonrpc选项"
+        print("请设置config.ini中的jsonrpc选项")
         exit(1)
     jsonreq = json.dumps(
         [{
@@ -51,10 +52,10 @@ def export_single(filename, link):
         request.add_data(jsonreq)
         req = urllib2.urlopen(request)
     except urllib2.URLError as urle:
-        print urle
+        print(urle)
         raise JsonrpcError("jsonrpc无法连接，请检查jsonrpc地址是否有误！")
     if req.code == 200:
-        print "已成功添加到jsonrpc\n"
+        print("已成功添加到jsonrpc\n")
 
 
 class JsonrpcError(Exception):
