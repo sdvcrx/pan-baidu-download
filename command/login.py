@@ -44,7 +44,7 @@ class BaiduAccount(object):
         self.baiduid = ''
         self.bduss = ''
 
-    def _get_badidu_uid(self):
+    def _get_baidu_uid(self):
         self.opener.open('http://www.baidu.com')
         for cookie in self.cj:
             if cookie.name == 'BAIDUID':
@@ -85,7 +85,7 @@ class BaiduAccount(object):
         self.cj.save()
 
     def login(self):
-        self._get_badidu_uid()
+        self._get_baidu_uid()
         self._check_verify_code()
         if self.codestring:
             # TODO: 验证码处理
