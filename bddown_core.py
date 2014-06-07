@@ -188,7 +188,8 @@ class Pan(object):
     def save(img):
         """Download vcode image."""
         data = urllib2.urlopen(img).read()
-        with open(os.path.dirname(os.path.abspath(__file__)) + '/vcode.jpg', mode='wb') as fp:
+        img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'vcode.jpg')
+        with open(img_path, mode='wb') as fp:
             fp.write(data)
         print("验证码已经保存至", os.path.dirname(os.path.abspath(__file__)))
 
