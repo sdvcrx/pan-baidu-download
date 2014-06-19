@@ -3,6 +3,7 @@
 from __future__ import print_function
 
 import urlparse
+import logging
 
 import bddown_help
 
@@ -14,6 +15,7 @@ __all__ = [
     "convert_none",
     "bcolor",
     "in_list",
+    "logger",
 ]
 
 URL = ['pan.baidu.com', 'yun.baidu.com']
@@ -128,3 +130,16 @@ def filter_dict_wrapper(dictionary):
         elif k == 'operation':
             d[k] = [filter_dict(in_list, item, FILTER_KEYS) for item in v[0].get('filelist')]
     return d
+
+
+def get_logger(logger_name):
+    alogger = logging.getLogger(logger_name)
+    fmt = logging.Formatter("%(levelname)s - %(method)s - %(type)s: \n-> %(message)s\n")
+    handler = logging.StreamHandler()
+    handler.setFormatter(fmt)
+    alogger.addHandler(handler)
+    alogger.setLevel(logging.INFO)
+    return alogger
+
+
+logger = get_logger('pan')

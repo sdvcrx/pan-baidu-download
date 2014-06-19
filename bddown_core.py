@@ -5,12 +5,11 @@ from __future__ import print_function
 import re
 import os
 import json
-import logging
 import urllib2
 import cookielib
 from time import time
 
-from util import convert_none
+from util import convert_none, logger
 from command.config import global_config
 
 
@@ -108,7 +107,8 @@ class FileInfo(object):
         url = "http://pan.baidu.com/share/list?channel=chunlei&clienttype=0&web=1&num=100&t={t1}" \
               "&page=1&dir={path}&t={tt}d&uk={self.uk}&shareid={self.shareid}&order=time&desc=1" \
               "&_={t2}&bdstoken={self.bdstoken}".format(t1=t1, path=path, tt=tt, self=self, t2=t2)
-        logging.debug(url)
+        log_message = {'method': 'GET', 'type': 'url'}
+        logger.debug(url, extra=log_message)
         html = Pan.opener.open(url)
         j = json.load(html)
         for i in j.get('list', []):
@@ -158,11 +158,10 @@ class Pan(object):
             pwd = raw_input("请输入提取密码\n")
         data = "pwd={0}&vcode=".format(pwd)
         url = "{0}&t={1}&".format(url.replace('init', 'verify'), int(time()))
-        logging.debug(url)
+        logger.debug(url, {'type': 'url', 'method': 'POST'})
         req = self.opener.open(url, data=data)
         mesg = req.read()
-        logging.debug(mesg)
-        logging.debug(req.info())
+        logger.debug(mesg, {'type': 'response', 'method': 'POST'})
         errno = json.loads(mesg).get('errno')
         if errno == -63:
             raise UnknownError
@@ -177,9 +176,11 @@ class Pan(object):
                                                                   bdstoken=convert_none('&bdstoken=', self.bdstoken),
                                                                   input_code=convert_none('&input=', input_code),
                                                                   vcode=convert_none('&vcode=', vcode))
-        logging.debug(url)
+        log_message = {'type': 'url', 'method': 'POST'}
+        logger.debug(url, extra=log_message)
         post_data = 'fid_list=["{}"]'.format(fs_id)
-        logging.debug(post_data)
+        log_message = {'type': 'post data', 'method': 'POST'}
+        logger.debug(post_data, extra=log_message)
         req = self.opener.open(url, post_data)
         json_data = json.load(req)
         return json_data
@@ -198,7 +199,8 @@ class Pan(object):
     def _get_link(self, fs_id):
         """Get real download link by fs_id( file's id)"""
         data = self._get_json(fs_id)
-        logging.debug(data)
+        log_message = {'type': 'JSON', 'method': 'GET'}
+        logger.debug(data, extra=log_message)
         if not data.get('errno'):
             return data.get('dlink').encode('utf-8')
         elif data.get('errno') == -19:

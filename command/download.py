@@ -3,12 +3,11 @@ from __future__ import print_function
 
 import os
 import sys
-import logging
 import argparse
 import subprocess
 
 from bddown_core import Pan, Album
-from util import convert_none, parse_url, add_http
+from util import convert_none, parse_url, add_http, logger
 from config import global_config
 
 
@@ -67,7 +66,7 @@ def download(args):
         elif res.get('type') == 3:
             raise NotImplementedError('This function has not implemented.')
         elif res.get('type') == 0:
-            logging.debug(url)
+            logger.debug(url, extra={"type": "wrong link", "method": "None"})
             continue
         else:
             continue

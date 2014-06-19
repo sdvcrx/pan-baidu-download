@@ -3,13 +3,13 @@
 
 from time import time
 import json
-import logging
 import re
 import os
 from urllib import urlencode
 import urllib2
 import cookielib
 
+from util import logger
 from config import global_config
 
 __all__ = ['login']
@@ -61,14 +61,16 @@ class BaiduAccount(object):
         for cookie in self.cj:
             if cookie.name == 'BAIDUID':
                 self.baiduid = cookie.value
-        logging.debug(self.baiduid)
+        log_message = {'type': 'baidu uid', 'method': 'GET'}
+        logger.debug(self.baiduid, extra=log_message)
 
     def _check_verify_code(self):
         """Check if login need to input verify code."""
         r = self.opener.open(self._check_url)
         s = r.read()
         data = json.loads(s[s.index('{'):-1])
-        logging.debug(data)
+        log_message = {'type': 'check loging verify code', 'method': 'GET'}
+        logger.debug(data, extra=log_message)
         # TODO: 验证码
         if data.get('errno'):
             self.codestring = data.get('codestring')
@@ -79,7 +81,8 @@ class BaiduAccount(object):
         s = r.read()
         try:
             self.token = re.search("login_token='(\w+)';", s).group(1)
-            logging.debug(self.token)
+            log_message = {'type': 'bdstoken', 'method': 'GET'}
+            logger.debug(self.token, extra=log_message)
         except:
             raise GetTokenError("Can't get the token")
 
@@ -91,12 +94,14 @@ class BaiduAccount(object):
                      'callback': 'parent.bdPass.api.login._postCallback', 'username': self.username,
                      'password': self.passwd, 'verifycode': '', 'mem_pass': 'on'}
         post_data = urlencode(post_data)
-        logging.debug(post_data)
+        log_message = {'type': 'login post data', 'method': 'POST'}
+        logger.debug(post_data, extra=log_message)
         self.opener.open(self._post_url, data=post_data)
         for cookie in self.cj:
             if cookie.name == 'BDUSS':
                 self.bduss = cookie.value
-        logging.debug(self.bduss)
+        log_message = {'type': 'BDUSS', 'method': 'GET'}
+        logger.debug(self.bduss, extra=log_message)
         self.cj.save()
 
     def login(self):
@@ -107,7 +112,6 @@ class BaiduAccount(object):
             pass
         self._get_token()
         self._post_data()
-        logging.debug(self.cj)
         if not self.bduss and not self.baiduid:
             raise LoginError('登陆异常')
 

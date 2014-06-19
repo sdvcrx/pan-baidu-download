@@ -4,11 +4,11 @@ from __future__ import print_function
 
 import json
 import urllib2
-import logging
 import base64
 
 from config import global_config
 from bddown_core import Pan, GetFilenameError
+from util import logger
 
 
 def export(links):
@@ -43,7 +43,7 @@ def export_single(filename, link):
                 }]
         }]
     )
-    logging.debug(jsonreq)
+    logger.debug(jsonreq, extra={"type": "jsonreq", "method": "POST"})
     try:
         request = urllib2.Request(jsonrpc_path)
         if jsonrpc_user and jsonrpc_pass:
