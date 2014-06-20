@@ -161,7 +161,7 @@ class Pan(object):
         logger.debug(url, extra={'type': 'url', 'method': 'POST'})
         req = self.opener.open(url, data=data)
         mesg = req.read()
-        logger.debug(mesg, extra={'type': 'response', 'method': 'POST'})
+        logger.debug(mesg, extra={'type': 'JSON', 'method': 'POST'})
         errno = json.loads(mesg).get('errno')
         if errno == -63:
             raise UnknownError
