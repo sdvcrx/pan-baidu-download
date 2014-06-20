@@ -96,13 +96,15 @@ class BaiduAccount(object):
         post_data = urlencode(post_data)
         log_message = {'type': 'login post data', 'method': 'POST'}
         logger.debug(post_data, extra=log_message)
-        self.opener.open(self._post_url, data=post_data)
+        response = self.opener.open(self._post_url, data=post_data).read()
+        log_message = {'type': 'response', 'method': 'POST'}
+        logger.debug(response, extra=log_message)
         for cookie in self.cj:
             if cookie.name == 'BDUSS':
                 self.bduss = cookie.value
         log_message = {'type': 'BDUSS', 'method': 'GET'}
         logger.debug(self.bduss, extra=log_message)
-        self.cj.save()
+        return response
 
     def login(self):
         self._get_baidu_uid()
@@ -114,6 +116,7 @@ class BaiduAccount(object):
         self._post_data()
         if not self.bduss and not self.baiduid:
             raise LoginError('登陆异常')
+        self.cj.save()
 
     def load_cookies_from_file(self):
         """Load cookies file if file exist."""
