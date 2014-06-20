@@ -158,10 +158,10 @@ class Pan(object):
             pwd = raw_input("请输入提取密码\n")
         data = "pwd={0}&vcode=".format(pwd)
         url = "{0}&t={1}&".format(url.replace('init', 'verify'), int(time()))
-        logger.debug(url, {'type': 'url', 'method': 'POST'})
+        logger.debug(url, extra={'type': 'url', 'method': 'POST'})
         req = self.opener.open(url, data=data)
         mesg = req.read()
-        logger.debug(mesg, {'type': 'response', 'method': 'POST'})
+        logger.debug(mesg, extra={'type': 'response', 'method': 'POST'})
         errno = json.loads(mesg).get('errno')
         if errno == -63:
             raise UnknownError
