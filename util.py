@@ -60,6 +60,10 @@ def parse_url(url):
     if result.path.startswith('/s/') or ('link' in result.path):
         return {'type': 1}
 
+    # http://pan.baidu.com/share/verify?shareid=2009678541&uk=2839544145
+    elif 'init' in result.path:
+        return {'type': 1}
+
     # http://pan.baidu.com/pcloud/album/info?uk=3943531277&album_id=1553987381796453514
     elif 'album' in result.path:
         info = dict(urlparse.parse_qsl(result.query))
