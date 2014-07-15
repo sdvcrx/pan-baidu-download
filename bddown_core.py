@@ -47,7 +47,10 @@ class FileInfo(object):
 
     def _get_info(self):
         self.info = self._str2dict(self.js[0])
-        bdstoken_tmp = self._str2dict(self.js[1])
+        try:
+            bdstoken_tmp = self._str2dict(self.js[1])
+        except IndexError:
+            raise DownloadError("The share link has been deleted!")
         self.info['FileUtils.bdstoken'] = bdstoken_tmp.get('FileUtils.bdstoken')
         self.shareid = self.info.get('FileUtils.share_id').strip('"')
         self.uk = self.info.get('FileUtils.share_uk').strip('"').strip('"')
@@ -266,6 +269,10 @@ class GetFilenameError(Exception):
 
 
 class UnknownError(Exception):
+    pass
+
+
+class DownloadError(Exception):
     pass
 
 
