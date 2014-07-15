@@ -1,19 +1,19 @@
 #!/usr/bin/env python
+from __future__ import print_function
 
 import os
 import sys
-import logging
 import argparse
 import subprocess
 
 from bddown_core import Pan, Album
-from util import convert_none, parse_url, add_http
+from util import convert_none, parse_url, add_http, logger
 from config import global_config
 
 
 def download_command(filename, link, limit=None, output_dir=None):
     bool(output_dir) and not os.path.exists(output_dir) and os.makedirs(output_dir)
-    print "\033[32m" + filename + "\033[0m"
+    print("\033[32m" + filename + "\033[0m")
     firefox_ua = 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:25.0) Gecko/20100101 Firefox/25.0'
     cmd = "aria2c -c -o '{filename}' -s5 -x5" \
           " --user-agent='{useragent}' --header 'Referer:http://pan.baidu.com/disk/home'" \
@@ -66,7 +66,7 @@ def download(args):
         elif res.get('type') == 3:
             raise NotImplementedError('This function has not implemented.')
         elif res.get('type') == 0:
-            logging.debug(url)
+            logger.debug(url, extra={"type": "wrong link", "method": "None"})
             continue
         else:
             continue

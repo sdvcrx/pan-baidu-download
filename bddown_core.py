@@ -1,15 +1,15 @@
 #!/usr/bin/env python2
 # coding=utf-8
+from __future__ import print_function
 
 import re
 import os
 import json
-import logging
 import urllib2
 import cookielib
 from time import time
 
-from util import convert_none
+from util import convert_none, logger
 from command.config import global_config
 
 
@@ -71,6 +71,7 @@ class FileInfo(object):
             # self.md5 = info.get('disk.util.ViewShareUtils.file_md5').strip('"')
 
     def _parse_json(self):
+        """Try parse json from javascript code."""
         # single file
         if self.js[0].startswith("var"):
             # js2 = self.js[0]
@@ -109,7 +110,8 @@ class FileInfo(object):
         url = "http://pan.baidu.com/share/list?channel=chunlei&clienttype=0&web=1&num=100&t={t1}" \
               "&page=1&dir={path}&t={tt}d&uk={self.uk}&shareid={self.shareid}&order=time&desc=1" \
               "&_={t2}&bdstoken={self.bdstoken}".format(t1=t1, path=path, tt=tt, self=self, t2=t2)
-        logging.debug(url)
+        log_message = {'method': 'GET', 'type': 'url'}
+        logger.debug(url, extra=log_message)
         html = Pan.opener.open(url)
         j = json.load(html)
         for i in j.get('list', []):
@@ -152,17 +154,17 @@ class Pan(object):
         return js
 
     def _verify_passwd(self, url):
+        """Verify password if url is a private sharing"""
         if self.secret:
             pwd = self.secret
         else:
             pwd = raw_input("请输入提取密码\n")
         data = "pwd={0}&vcode=".format(pwd)
         url = "{0}&t={1}&".format(url.replace('init', 'verify'), int(time()))
-        logging.debug(url)
+        logger.debug(url, extra={'type': 'url', 'method': 'POST'})
         req = self.opener.open(url, data=data)
         mesg = req.read()
-        logging.debug(mesg)
-        logging.debug(req.info())
+        logger.debug(mesg, extra={'type': 'JSON', 'method': 'POST'})
         errno = json.loads(mesg).get('errno')
         if errno == -63:
             raise UnknownError
@@ -177,26 +179,31 @@ class Pan(object):
                                                                   bdstoken=convert_none('&bdstoken=', self.bdstoken),
                                                                   input_code=convert_none('&input=', input_code),
                                                                   vcode=convert_none('&vcode=', vcode))
-        logging.debug(url)
+        log_message = {'type': 'url', 'method': 'POST'}
+        logger.debug(url, extra=log_message)
         post_data = 'fid_list=["{}"]'.format(fs_id)
-        logging.debug(post_data)
+        log_message = {'type': 'post data', 'method': 'POST'}
+        logger.debug(post_data, extra=log_message)
         req = self.opener.open(url, post_data)
         json_data = json.load(req)
         return json_data
 
     @staticmethod
     def save(img):
+        """Download vcode image."""
         data = urllib2.urlopen(img).read()
-        with open(os.path.dirname(os.path.abspath(__file__)) + '/vcode.jpg', mode='wb') as fp:
+        img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'vcode.jpg')
+        with open(img_path, mode='wb') as fp:
             fp.write(data)
-        print "验证码已经保存至", os.path.dirname(os.path.abspath(__file__))
+        print("验证码已经保存至", os.path.dirname(os.path.abspath(__file__)))
 
     # TODO: Cacahe support (decorator)
     # TODO: Save download status
     def _get_link(self, fs_id):
         """Get real download link by fs_id( file's id)"""
         data = self._get_json(fs_id)
-        logging.debug(data)
+        log_message = {'type': 'JSON', 'method': 'GET'}
+        logger.debug(data, extra=log_message)
         if not data.get('errno'):
             return data.get('dlink').encode('utf-8')
         elif data.get('errno') == -19:
@@ -233,6 +240,7 @@ class Album(object):
         return len(self._links)
 
     def _get_info(self):
+        """Get album's files info which has filename and download link. (And md5, file size)"""
         url = "http://pan.baidu.com/pcloud/album/listfile?album_id={self._album_id}&query_uk={self._uk}&start=0" \
               "&limit={self._limit}&channel=chunlei&clienttype=0&web=1".format(self=self)
         res = Pan.opener.open(url)

@@ -1,7 +1,9 @@
 #!/usr/bin/env python2
 # coding=utf-8
+from __future__ import print_function
 
 import urlparse
+import logging
 
 import bddown_help
 
@@ -13,6 +15,7 @@ __all__ = [
     "convert_none",
     "bcolor",
     "in_list",
+    "logger",
 ]
 
 URL = ['pan.baidu.com', 'yun.baidu.com']
@@ -35,18 +38,17 @@ def usage(doc=bddown_help.usage, message=None):
     if hasattr(doc, '__call__'):
         doc = doc()
     if message:
-        print message
-    print doc.strip()
+        print(message)
+    print(doc.strip())
 
 
 def parse_url(url):
-    """This function will parse url and judge which type the link is.
+    """
+    This function will parse url and judge which type the link is.
 
-    Args:
-      url (str): the url user input.
-
-    Returns:
-      type (dict): 1 -> link, 2 -> album, 3 -> home, 0 -> unknown, -1 -> error
+    :type url: str
+    :param url: baidu netdisk share url.
+    :return: dict
     """
     result = urlparse.urlparse(url)
 
@@ -132,3 +134,16 @@ def filter_dict_wrapper(dictionary):
         elif k == 'operation':
             d[k] = [filter_dict(in_list, item, FILTER_KEYS) for item in v[0].get('filelist')]
     return d
+
+
+def get_logger(logger_name):
+    alogger = logging.getLogger(logger_name)
+    fmt = logging.Formatter("%(levelname)s - %(method)s - %(type)s: \n-> %(message)s\n")
+    handler = logging.StreamHandler()
+    handler.setFormatter(fmt)
+    alogger.addHandler(handler)
+    alogger.setLevel(logging.INFO)
+    return alogger
+
+
+logger = get_logger('pan')
