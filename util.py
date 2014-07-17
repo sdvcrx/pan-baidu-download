@@ -2,6 +2,7 @@
 # coding=utf-8
 from __future__ import print_function
 
+import base64
 import urlparse
 import logging
 
@@ -134,6 +135,39 @@ def filter_dict_wrapper(dictionary):
         elif k == 'operation':
             d[k] = [filter_dict(in_list, item, FILTER_KEYS) for item in v[0].get('filelist')]
     return d
+
+
+def hack_sign(sign3, sign1):
+    """
+    Generate sign which is needed by downloading private file.
+    Hack from `yunData.sign2`.
+
+    :param sign3: yunData.sign3
+    :type sign3: str
+    :param sign1: yunData.sign1
+    :type sign1: str
+    :return: str (base64 encoded string)
+    """
+    def sign2(s3, s1):
+        o = ""
+        v = len(s3)
+        a = [ord(s3[i % v]) for i in range(256)]
+        p = range(256)
+        # loop one
+        u = 0
+        for q in range(256):
+            u = (u + p[q] + a[q]) % 256
+            p[q], p[u] = p[u], p[q]
+        # loop two
+        i = u = 0
+        for q in range(len(s1)):
+            i = (i + 1) % 256
+            u = (u + p[i]) % 256
+            p[i], p[u] = p[u], p[i]
+            k = p[((p[i] + p[u]) % 256)]
+            o += chr(ord(s1[q]) ^ k)
+        return o
+    return base64.encodestring(sign2(sign3, sign1))[:-1]
 
 
 def get_logger(logger_name):
