@@ -78,7 +78,8 @@ def parse_url(url):
     else:
         return {'type': 0}
 
-add_http = lambda url: url if url.startswith('http://') else 'http://'+url
+
+add_http = lambda url: url if url.startswith('http://') else 'http://' + url
 
 convert_none = lambda opt, arg: opt + arg if arg else ""
 
@@ -101,6 +102,7 @@ class BColor(object):
         self.WARNING = ''
         self.FAIL = ''
         self.ENDC = ''
+
 
 bcolor = BColor()
 
