@@ -188,6 +188,20 @@ class Pan(object):
         json_data = json.load(req)
         return json_data
 
+    def _get_home_file_dlink(self, fs_id, sign):
+        """Post fs_id to get home file dlink"""
+        url = 'http://pan.baidu.com/api/download?channel=chunlei&clienttype=0&web=1&app_id=250528' \
+              '{bdstoken}'.format(bdstoken=convert_none("&bdstoken=", self.bdstoken))
+        log_message = {'type': 'url', 'method': 'POST'}
+        logger.debug(url, extra=log_message)
+        post_data = 'fidlist=[{fs_id}]&timestamp={t}&sign={sign}' \
+                    '&type=dlink'.format(fs_id=fs_id, sign=sign, t=str(int(time())))
+        log_message = {'type': 'post data', 'method': 'POST'}
+        logger.debug(post_data, extra=log_message)
+        req = self.opener.open(url, post_data)
+        json_data = json.load(req)
+        return json_data
+
     @staticmethod
     def save(img):
         """Download vcode image."""
