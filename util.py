@@ -169,7 +169,7 @@ def hack_sign(sign3, sign1):
             k = p[((p[i] + p[u]) % 256)]
             o += chr(ord(s1[q]) ^ k)
         return o
-    return base64.encodestring(sign2(sign3, sign1))[:-1]
+    return base64.encodestring(sign2(sign3, sign1)).rstrip("\n")
 
 
 def get_logger(logger_name):
