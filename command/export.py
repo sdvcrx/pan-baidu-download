@@ -3,8 +3,7 @@
 from __future__ import print_function
 
 import json
-import urllib2
-import base64
+import requests
 
 from config import global_config
 from bddown_core import Pan, GetFilenameError
@@ -43,18 +42,16 @@ def export_single(filename, link):
                 }]
         }]
     )
-    logger.debug(jsonreq, extra={"type": "jsonreq", "method": "POST"})
     try:
-        request = urllib2.Request(jsonrpc_path)
         if jsonrpc_user and jsonrpc_pass:
-            base64string = base64.encodestring('%s:%s' % (jsonrpc_user, jsonrpc_pass)).replace('\n', '')
-            request.add_header("Authorization", "Basic %s" % base64string)
-        request.add_data(jsonreq)
-        req = urllib2.urlopen(request)
-    except urllib2.URLError as urle:
+            response = requests.post(url=jsonrpc_path, data=jsonreq, auth=(jsonrpc_user, jsonrpc_pass))
+        else:
+            response = requests.post(url=jsonrpc_path, data=jsonreq)
+        logger.debug(response.text, extra={"type": "jsonreq", "method": "POST"})
+    except requests.ConnectionError as urle:
         print(urle)
         raise JsonrpcError("jsonrpc无法连接，请检查jsonrpc地址是否有误！")
-    if req.code == 200:
+    if response.ok:
         print("已成功添加到jsonrpc\n")
 
 
