@@ -5,9 +5,10 @@ from time import time
 import json
 import re
 import os
-from urllib import urlencode
-import urllib2
-import cookielib
+import pickle
+
+from requests import Session
+import requests.utils
 
 from util import logger
 from config import global_config
@@ -36,12 +37,7 @@ class BaiduAccount(object):
         self.username = username
         self.passwd = passwd
         self.cookie_filename = cookie_filename
-        self.cj = cookielib.LWPCookieJar(cookie_filename)
-        self.opener = urllib2.build_opener(
-            urllib2.HTTPRedirectHandler(),
-            urllib2.HTTPHandler(),
-            urllib2.HTTPCookieProcessor(self.cj)
-        )
+        self.session = Session()
         self.codestring = ''
         self._time = int(time())
         self._check_url = 'https://passport.baidu.com/v2/api/?logincheck&callback=bdPass.api.login._needCodestring' \
@@ -57,17 +53,15 @@ class BaiduAccount(object):
 
     def _get_baidu_uid(self):
         """Get BAIDUID."""
-        self.opener.open('http://www.baidu.com')
-        for cookie in self.cj:
-            if cookie.name == 'BAIDUID':
-                self.baiduid = cookie.value
+        self.session.get('http://www.baidu.com')
+        self.baiduid = self.session.cookies.get('BAIDUID')
         log_message = {'type': 'baidu uid', 'method': 'GET'}
         logger.debug(self.baiduid, extra=log_message)
 
     def _check_verify_code(self):
         """Check if login need to input verify code."""
-        r = self.opener.open(self._check_url)
-        s = r.read()
+        r = self.session.get(self._check_url)
+        s = r.text
         data = json.loads(s[s.index('{'):-1])
         log_message = {'type': 'check loging verify code', 'method': 'GET'}
         logger.debug(data, extra=log_message)
@@ -77,10 +71,11 @@ class BaiduAccount(object):
 
     def _get_token(self):
         """Get bdstoken."""
-        r = self.opener.open(self._token_url)
-        s = r.read()
+        r = self.session.get(self._token_url)
+        s = r.text
         try:
             self.token = re.search("login_token='(\w+)';", s).group(1)
+            # FIXME: if couldn't get the token, we can not get the log message.
             log_message = {'type': 'bdstoken', 'method': 'GET'}
             logger.debug(self.token, extra=log_message)
         except:
@@ -93,18 +88,21 @@ class BaiduAccount(object):
                      'staticpage': 'http://www.baidu.com/cache/user/html/jump.html', 'loginType': '1', 'tpl': 'mn',
                      'callback': 'parent.bdPass.api.login._postCallback', 'username': self.username,
                      'password': self.passwd, 'verifycode': '', 'mem_pass': 'on'}
-        post_data = urlencode(post_data)
+        # post_data = urlencode(post_data)
         log_message = {'type': 'login post data', 'method': 'POST'}
         logger.debug(post_data, extra=log_message)
-        response = self.opener.open(self._post_url, data=post_data).read()
+        response = self.session.post(self._post_url, data=post_data)
+        s = response.text
         log_message = {'type': 'response', 'method': 'POST'}
-        logger.debug(response, extra=log_message)
-        for cookie in self.cj:
-            if cookie.name == 'BDUSS':
-                self.bduss = cookie.value
+        logger.debug(s, extra=log_message)
+        self.bduss = response.cookies.get("BDUSS")
         log_message = {'type': 'BDUSS', 'method': 'GET'}
         logger.debug(self.bduss, extra=log_message)
-        return response
+        return s
+
+    def _save_cookies(self):
+        with open(self.cookie_filename) as f:
+            pickle.dump(requests.utils.dict_from_cookiejar(self.session.cookies), f)
 
     def login(self):
         self._get_baidu_uid()
@@ -116,17 +114,18 @@ class BaiduAccount(object):
         self._post_data()
         if not self.bduss and not self.baiduid:
             raise LoginError('登陆异常')
-        self.cj.save()
+        self._save_cookies()
 
     def load_cookies_from_file(self):
         """Load cookies file if file exist."""
         if os.access(self.cookie_filename, os.F_OK):
-            self.cj.load()
-            for cookie in self.cj:
-                if cookie.name == 'BAIDUID':
-                    self.baiduid = cookie.value
-                elif cookie.name == 'BDUSS':
-                    self.bduss = cookie.value
+            with open(self.cookie_filename) as f:
+                cookies = requests.utils.cookiejar_from_dict(pickle.load(f))
+            self.session.cookies = cookies
+            # NOT SURE stoken is bdstoken!
+            # self.token = self.session.cookies.get('STOKEN')
+            self.baiduid = self.session.cookies.get('BAIDUID')
+            self.bduss = self.session.cookies.get('BDUSS')
 
 
 class GetTokenError(Exception):
