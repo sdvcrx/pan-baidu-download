@@ -63,6 +63,21 @@ class Pan(object):
             if isinstance(v, unicode):
                 dictionary[k] = v.encode('utf-8')
 
+    def _get_js(self, link):
+        """Get javascript code in html like <script type="javascript">/*<![CDATA[*/  sth  /*]]>*/</script>
+        :param link: netdisk sharing link(publib or private).
+        :type link: str
+        :return list or None
+        """
+        req = self.session.get(link)
+        if 'init' in req.url:
+            self.verify_passwd(req.url)
+            req = self.session.get(link)
+        data = req.text
+        js_pattern = re.compile('<script\stype="text/javascript">/\*<!\[CDATA\[\*/(.+?)/\*\]\]>\*/</script>', re.DOTALL)
+        js = re.findall(js_pattern, data)
+        return js
+
     def verify_passwd(self, url, secret=None):
         """
         Verify password if url is a private sharing.
@@ -243,17 +258,6 @@ class Pan(object):
         self.shareid = file_info.shareid
         self.timestamp = file_info.timestamp
         self.sign = file_info.sign
-
-    def _get_js(self):
-        """Get javascript code in html like '<script type="javascript">/*<![CDATA[*/  sth  /*]]>*/</script>"""
-        req = self.opener.open(self.bdlink)
-        if 'init' in req.url:
-            self._verify_passwd(req.url)
-            req = self.opener.open(self.bdlink)
-        data = req.read()
-        js_pattern = re.compile('<script\stype="text/javascript">/\*<!\[CDATA\[\*/(.+?)/\*\]\]>\*/</script>', re.DOTALL)
-        js = re.findall(js_pattern, data)
-        return js
 
     def _get_json(self, fs_id, input_code=None, vcode=None):
         """Post fs_id to get json of real download links"""
