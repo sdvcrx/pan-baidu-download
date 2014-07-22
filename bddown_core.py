@@ -5,12 +5,119 @@ from __future__ import print_function
 import re
 import os
 import json
-import urllib2
-import cookielib
+import pickle
 from time import time
+
+import requests
 
 from util import convert_none, logger
 from command.config import global_config
+
+BAIDUPAN_SERVER = "http://pan.baidu.com/"
+
+
+class Pan(object):
+    headers = {}
+
+    def __init__(self):
+        self.baiduid = ''
+        self.bduss = ''
+        self.bdstoken = ''
+        self.session = requests.Session()
+        self.cookies = self.session.cookies
+
+    def _load_cookies_from_file(self):
+        """Load cookies file if file exist."""
+        if os.access(global_config.cookies, os.F_OK):
+            with open(global_config.cookies) as f:
+                cookies = requests.utils.cookiejar_from_dict(pickle.load(f))
+            self.session.cookies = cookies
+            # NOT SURE stoken is bdstoken!
+            # self.token = self.session.cookies.get('STOKEN')
+            self.baiduid = self.cookies.get('BAIDUID')
+            self.bduss = self.cookies.get('BDUSS')
+            return True
+        return False
+
+    @staticmethod
+    def _str2dict(s):
+        """Try convert javascript variable to dict and return the dict."""
+        return dict(
+            [i.split('=', 1) for i in s.split(';') if ('File' in i or 'disk' in i) and len(i.split('=', 1)) == 2])
+
+    def _save_img(self, img_url):
+        """Download vcode image and save it to path of source code."""
+        r = self.session.get(img_url)
+        data = r.content
+        img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'vcode.jpg')
+        with open(img_path, mode='wb') as fp:
+            fp.write(data)
+        print("Saved verification code to ", os.path.dirname(os.path.abspath(__file__)))
+
+    @staticmethod
+    def _dict_to_utf8(dictionary):
+        """Convert dictionary's value to utf-8"""
+        if not isinstance(dictionary, dict):
+            return
+        for k, v in dictionary.items():
+            if isinstance(v, unicode):
+                dictionary[k] = v.encode('utf-8')
+
+    def verify_passwd(self, url, secret=None):
+        """
+        Verify password if url is a private sharing.
+        :param url: link of private sharing. ('init' must in url)
+        :type url: str
+        :param secret: password of the private sharing
+        :type secret: str
+        :return: None
+        """
+        if secret:
+            pwd = secret
+        else:
+            # FIXME: Improve translation
+            pwd = raw_input("Please input this sharing password\n")
+        data = {'pwd': pwd, 'vcode': ''}
+        url = "{0}&t={1}&".format(url.replace('init', 'verify'), int(time()))
+        logger.debug(url, extra={'type': 'url', 'method': 'POST'})
+        r = self.session.post(url=url, data=data, headers=self.headers)
+        mesg = r.json
+        logger.debug(mesg, extra={'type': 'JSON', 'method': 'POST'})
+        errno = mesg.get('errno')
+        if errno == -63:
+            raise UnknownError
+        elif errno == -9:
+            raise VerificationError("提取密码错误\n")
+
+    def request(self, method='GET', base_url='', extra_params=None, post_data=None, **kwargs):
+        """
+        Send a request based on template.
+        :param method: http method, GET or POST
+        :param base_url: base url
+        :param extra_params: extra params for url
+        :type extra_params: dict
+        :param post_data: post data. Ignore if method is GET
+        :type post_data: dict
+        :return: requests.models.Response or None if invainvalid
+        """
+        params = {
+            'channel': 'chunlei',
+            'clienttype': 0,
+            'web': 1,
+            'app_id': 250528,
+            't': str(int(time())),
+            'bdstoken': self.cookies.get('STOKEN')
+        }
+        if isinstance(extra_params, dict):
+            params.update(extra_params)
+            self._dict_to_utf8(params)
+        if method == 'GET' and base_url:
+            response = self.session.get(base_url, params=params, headers=self.headers, **kwargs)
+        elif method == 'POST' and base_url and post_data:
+            response = self.session.post(base_url, data=post_data, params=params, headers=self.headers, **kwargs)
+        else:
+            response = None
+        return response
 
 
 class FileInfo(object):
@@ -39,11 +146,6 @@ class FileInfo(object):
         self.sign = ""
         self._get_info()
         self._parse_json()
-
-    @staticmethod
-    def _str2dict(s):
-        return dict(
-            [i.split('=', 1) for i in s.split(';') if ('File' in i or 'disk' in i) and len(i.split('=', 1)) == 2])
 
     def _get_info(self):
         self.info = self._str2dict(self.js[0])
@@ -153,24 +255,6 @@ class Pan(object):
         js = re.findall(js_pattern, data)
         return js
 
-    def _verify_passwd(self, url):
-        """Verify password if url is a private sharing"""
-        if self.secret:
-            pwd = self.secret
-        else:
-            pwd = raw_input("请输入提取密码\n")
-        data = "pwd={0}&vcode=".format(pwd)
-        url = "{0}&t={1}&".format(url.replace('init', 'verify'), int(time()))
-        logger.debug(url, extra={'type': 'url', 'method': 'POST'})
-        req = self.opener.open(url, data=data)
-        mesg = req.read()
-        logger.debug(mesg, extra={'type': 'JSON', 'method': 'POST'})
-        errno = json.loads(mesg).get('errno')
-        if errno == -63:
-            raise UnknownError
-        elif errno == -9:
-            raise VerificationError("提取密码错误\n")
-
     def _get_json(self, fs_id, input_code=None, vcode=None):
         """Post fs_id to get json of real download links"""
         url = 'http://pan.baidu.com/share/download?channel=chunlei&clienttype=0&web=1' \
@@ -201,15 +285,6 @@ class Pan(object):
         req = self.opener.open(url, post_data)
         json_data = json.load(req)
         return json_data
-
-    @staticmethod
-    def save(img):
-        """Download vcode image."""
-        data = urllib2.urlopen(img).read()
-        img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'vcode.jpg')
-        with open(img_path, mode='wb') as fp:
-            fp.write(data)
-        print("验证码已经保存至", os.path.dirname(os.path.abspath(__file__)))
 
     # TODO: Cacahe support (decorator)
     # TODO: Save download status
