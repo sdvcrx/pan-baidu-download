@@ -9,7 +9,7 @@ from time import time
 
 import requests
 
-from util import convert_none, logger
+from util import logger
 from command.config import global_config
 
 BAIDUPAN_SERVER = "http://pan.baidu.com/api/"
@@ -92,6 +92,37 @@ class Pan(object):
         js = re.findall(js_pattern, data)
         return js[0] or None
 
+    def get_dlink(self, link):
+        info = FileInfo()
+        js = self._get_js(link)
+        if info.match(js):
+            extra_params = dict(bdstoken=info.bdstoken, sign=info.sign, timestamp=str(int(time())))
+            post_form = {
+                'encrypt': '0',
+                'product': 'share',
+                'uk': info.uk,
+                'primaryid': info.share_id,
+                'fid_list': '[{0}]'.format(info.fid_list)
+            }
+            url = BAIDUPAN_SERVER + 'sharedownload'
+            response = self._request('POST', url, extra_params=extra_params, post_data=post_form)
+            if response.ok:
+                _json = response.json()
+                errno = _json['errno']
+                while errno == -20:
+                    verify_params = self._handle_captcha(info.bdstoken)
+                    post_form.update(verify_params)
+                    response = self._request('POST', url, extra_params=extra_params, post_data=post_form)
+                    _json = response.json()
+                    errno = _json['errno']
+                logger.debug(_json, extra={'type': 'json', 'method': 'POST'})
+                if errno == 0:
+                    # FIXME: only support single file for now
+                    dlink = _json['list'][0]['dlink']
+                    setattr(info, 'dlink', dlink)
+                else:
+                    raise UnknownError
+        return info
 
     def verify_passwd(self, url, secret=None):
         """
