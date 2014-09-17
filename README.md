@@ -7,11 +7,11 @@ pan-baidu-download
 
 [14-04-19]
 
-支持下载专辑
+~~支持下载专辑~~
 
 [14-04-16]
 
-支持多文件和文件夹下载
+~~支持多文件和文件夹下载~~
 
 [14-02-09]
 
@@ -29,6 +29,8 @@ pan-baidu-download
 - 百度网盘的分享地址
 
 - python2.7
+
+- [Requests](https://github.com/kennethreitz/requests/)
 
 - aria2
 
@@ -129,13 +131,13 @@ JsonRPC
 
 ```
 $ uname -r
-3.14.1-1-ARCH
+3.16.2-1-uksm
 $ aria2c --version
-aria2 version 1.18.5
+aria2 version 1.18.8
 $ python -V
-Python 2.7.6
+Python 2.7.*
 $ date -I
-2014-04-16
+2014-09-17
 ```
 
 
