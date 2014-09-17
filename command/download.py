@@ -11,15 +11,17 @@ from util import convert_none, parse_url, add_http, logger
 from config import global_config
 
 
-def download_command(filename, link, limit=None, output_dir=None):
+def download_command(filename, link, cookies, limit=None, output_dir=None):
     bool(output_dir) and not os.path.exists(output_dir) and os.makedirs(output_dir)
     print("\033[32m" + filename + "\033[0m")
     pan_ua = 'netdisk;4.4.0.6;PC;PC-Windows;6.2.9200;WindowsBaiduYunGuanJia'
     cmd = "aria2c -c -o '{filename}' -s5 -x5" \
           " --user-agent='{useragent}' --header 'Referer:http://pan.baidu.com/disk/home'" \
-          " {limit} {dir} '{link}'".format(filename=filename, useragent=pan_ua, link=link,
-                                           limit=convert_none('--max-download-limit=', limit),
-                                           dir=convert_none('--dir=', output_dir))
+          " --header 'Cookies: {cookies}' {limit} {dir}" \
+          " '{link}'".format(filename=filename, useragent=pan_ua, link=link,
+                             cookies=cookies,
+                             limit=convert_none('--max-download-limit=', limit),
+                             dir=convert_none('--dir=', output_dir))
     subprocess.call(cmd, shell=True)
 
 
