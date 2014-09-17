@@ -13,11 +13,14 @@ import requests
 from util import convert_none, logger
 from command.config import global_config
 
-BAIDUPAN_SERVER = "http://pan.baidu.com/"
+BAIDUPAN_SERVER = "http://pan.baidu.com/api/"
 
 
 class Pan(object):
-    headers = {}
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko)'
+                      ' Chrome/37.0.2062.120 Safari/537.36'
+    }
 
     def __init__(self):
         self.baiduid = ''
@@ -25,6 +28,7 @@ class Pan(object):
         self.bdstoken = ''
         self.session = requests.Session()
         self.cookies = self.session.cookies
+        self._load_cookies_from_file()
 
     def _load_cookies_from_file(self):
         """Load cookies file if file exist."""
@@ -104,7 +108,7 @@ class Pan(object):
         elif errno == -9:
             raise VerificationError("提取密码错误\n")
 
-    def request(self, method='GET', base_url='', extra_params=None, post_data=None, **kwargs):
+    def _request(self, method='GET', base_url='', extra_params=None, post_data=None, **kwargs):
         """
         Send a request based on template.
         :param method: http method, GET or POST
