@@ -4,7 +4,6 @@ from __future__ import print_function
 
 import re
 import os
-import json
 import pickle
 from time import time
 
@@ -51,6 +50,23 @@ class Pan(object):
         with open(img_path, mode='wb') as fp:
             fp.write(data)
         print("Saved verification code to ", os.path.dirname(os.path.abspath(__file__)))
+
+    def _handle_captcha(self, bdstoken=None):
+        url = BAIDUPAN_SERVER + 'getcaptcha'
+        d = {}
+        extra_params = {
+            'prod': 'share',
+        }
+        if bdstoken:
+            extra_params['bdstoken'] = bdstoken
+        res = self._request(base_url=url, extra_params=extra_params)
+        if res.ok:
+            t = res.json()
+            self._save_img(t['vcode_img'])
+            vcode_input = raw_input("Please input the captcha:\n")
+            d['vcode_str'] = t['vcode_str']
+            d['vcode_input'] = vcode_input
+        return d
 
     @staticmethod
     def _dict_to_utf8(dictionary):
@@ -119,7 +135,6 @@ class Pan(object):
             'clienttype': 0,
             'web': 1,
             'app_id': 250528,
-            't': str(int(time())),
             'bdstoken': self.cookies.get('STOKEN')
         }
         if isinstance(extra_params, dict):
