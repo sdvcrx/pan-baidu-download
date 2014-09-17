@@ -77,7 +77,7 @@ class Pan(object):
             if isinstance(v, unicode):
                 dictionary[k] = v.encode('utf-8')
 
-    def _get_js(self, link):
+    def _get_js(self, link, secret=None):
         """Get javascript code in html which contains share files info
         :param link: netdisk sharing link(publib or private).
         :type link: str
@@ -85,16 +85,16 @@ class Pan(object):
         """
         req = self.session.get(link)
         if 'init' in req.url:
-            self.verify_passwd(req.url)
+            self.verify_passwd(req.url, secret)
             req = self.session.get(link)
         data = req.text
         js_pattern = re.compile('<script\stype="text/javascript">!function\(\)([^<]+)</script>', re.DOTALL)
         js = re.findall(js_pattern, data)
         return js[0] or None
 
-    def get_dlink(self, link):
+    def get_dlink(self, link, secret=None):
         info = FileInfo()
-        js = self._get_js(link)
+        js = self._get_js(link, secret)
         if info.match(js):
             extra_params = dict(bdstoken=info.bdstoken, sign=info.sign, timestamp=str(int(time())))
             post_form = {

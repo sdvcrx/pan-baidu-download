@@ -50,11 +50,10 @@ def download(args):
         res = parse_url(url)
         # normal
         if res.get('type') == 1:
-            pan = Pan(url, secret=secret)
-            count = 1
-            while count != 0:
-                link, filename, count = pan.info
-                download_command(filename, link, limit=limit, output_dir=output_dir)
+            pan = Pan()
+            info = pan.get_dlink(url, secret)
+            cookies = 'BDUSS={0}'.format(pan.bduss)
+            download_command(info.filename, info.dlink, cookies=cookies, limit=limit, output_dir=output_dir)
 
         # album
         elif res.get('type') == 2:
