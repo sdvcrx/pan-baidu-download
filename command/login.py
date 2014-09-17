@@ -101,7 +101,7 @@ class BaiduAccount(object):
         return s
 
     def _save_cookies(self):
-        with open(self.cookie_filename) as f:
+        with open(self.cookie_filename, 'w') as f:
             pickle.dump(requests.utils.dict_from_cookiejar(self.session.cookies), f)
 
     def login(self):
