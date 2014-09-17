@@ -6,7 +6,7 @@ import sys
 import argparse
 import subprocess
 
-from bddown_core import Pan, Album
+from bddown_core import Pan
 from util import convert_none, parse_url, add_http, logger
 from config import global_config
 
@@ -42,7 +42,8 @@ def download(args):
 
     # if is wap
     links = [link.replace("wap/link", "share/link") for link in links]
-    links = map(add_http, links)        # add 'http://'
+    # add 'http://'
+    links = map(add_http, links)
     for url in links:
         res = parse_url(url)
         # normal
@@ -55,13 +56,7 @@ def download(args):
 
         # album
         elif res.get('type') == 2:
-            album_id = res.get('album_id')
-            uk = res.get('uk')
-            album = Album(album_id, uk)
-            count = 1
-            while count != 0:
-                link, filename, count = album.info
-                download_command(filename, link, limit=limit, output_dir=output_dir)
+            raise NotImplementedError('This function has not implemented.')
         # home
         elif res.get('type') == 3:
             raise NotImplementedError('This function has not implemented.')
