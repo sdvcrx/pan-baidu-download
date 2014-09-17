@@ -43,12 +43,6 @@ class Pan(object):
             return True
         return False
 
-    @staticmethod
-    def _str2dict(s):
-        """Try convert javascript variable to dict and return the dict."""
-        return dict(
-            [i.split('=', 1) for i in s.split(';') if ('File' in i or 'disk' in i) and len(i.split('=', 1)) == 2])
-
     def _save_img(self, img_url):
         """Download vcode image and save it to path of source code."""
         r = self.session.get(img_url)
@@ -68,19 +62,20 @@ class Pan(object):
                 dictionary[k] = v.encode('utf-8')
 
     def _get_js(self, link):
-        """Get javascript code in html like <script type="javascript">/*<![CDATA[*/  sth  /*]]>*/</script>
+        """Get javascript code in html which contains share files info
         :param link: netdisk sharing link(publib or private).
         :type link: str
-        :return list or None
+        :return str or None
         """
         req = self.session.get(link)
         if 'init' in req.url:
             self.verify_passwd(req.url)
             req = self.session.get(link)
         data = req.text
-        js_pattern = re.compile('<script\stype="text/javascript">/\*<!\[CDATA\[\*/(.+?)/\*\]\]>\*/</script>', re.DOTALL)
+        js_pattern = re.compile('<script\stype="text/javascript">!function\(\)([^<]+)</script>', re.DOTALL)
         js = re.findall(js_pattern, data)
-        return js
+        return js[0] or None
+
 
     def verify_passwd(self, url, secret=None):
         """
