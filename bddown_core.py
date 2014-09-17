@@ -150,229 +150,44 @@ class Pan(object):
 
 
 class FileInfo(object):
-    """Get necessary info from javascript code by regular expression
+    pattern = re.compile('yunData\.(\w+\s=\s"\w+");')
+    filename_pattern = re.compile('"server_filename":"([^"]+)"', re.DOTALL)
 
-    Attributes:
-        secret (str): the password to enter secret share page.
-        bdstoken (str): token from login cookies.
-        filename (list): the filenames of download files.
-        fs_id (list): download files' ids.
-        uk (str): user number of the share file.
-        shareid (str): id of the share file.
-        timestamp (str): unix timestamp of get download page.
-        sign (str): relative to timestamp. Server will check sign and timestamp when we try to get download link.
-    """
+    def __init__(self):
+        self.share_id = None
+        self.bdstoken = None
+        self.uk = None
+        self.bduss = None
+        self.fid_list = None
+        self.sign = None
+        self.filename = None
 
-    def __init__(self, js):
-        self.js = js
-        self.info = {}
-        self.filenames = []
-        self.bdstoken = ""
-        self.fid_list = []
-        self.uk = ""
-        self.shareid = ""
-        self.timestamp = ""
-        self.sign = ""
-        self._get_info()
-        self._parse_json()
+    def __call__(self, js):
+        return self.match(js)
 
-    def _get_info(self):
-        self.info = self._str2dict(self.js[0])
-        try:
-            bdstoken_tmp = self._str2dict(self.js[1])
-        except IndexError:
-            raise DownloadError("The share link has been deleted!")
-        self.info['FileUtils.bdstoken'] = bdstoken_tmp.get('FileUtils.bdstoken')
-        self.shareid = self.info.get('FileUtils.share_id').strip('"')
-        self.uk = self.info.get('FileUtils.share_uk').strip('"').strip('"')
-        self.timestamp = self.info.get('FileUtils.share_timestamp').strip('"')
-        self.sign = self.info.get('FileUtils.share_sign').strip('"')
-        # self.fs_id = info.get('disk.util.ViewShareUtils.fsId').strip('"')
-        self.bdstoken = self.info.get('disk.util.ViewShareUtils.bdstoken') or self.info.get(
-            'FileUtils.bdstoken')
-        self.bdstoken = self.bdstoken.strip('"')
-        if self.bdstoken == "null":
-            self.bdstoken = None
-            # try:
-            #     self.bdstoken = info.get('disk.util.ViewShareUtils.bdstoken').strip('"')
-            # except AttributeError:
-            #     self.bdstoken = info.get('FileUtils.bdstoken').strip('"')
+    def __repr__(self):
+        return '<FileInfo %r>' % self.share_id
 
-            # TODO: md5
-            # self.md5 = info.get('disk.util.ViewShareUtils.file_md5').strip('"')
-
-    def _parse_json(self):
-        """Try parse json from javascript code."""
-        # single file
-        if self.js[0].startswith("var"):
-            # js2 = self.js[0]
-            # get json
-            # [1:-1] can remove double quote
-            d = [self.info.get('disk.util.ViewShareUtils.viewShareData').replace('\\\\', '\\').decode(
-                "unicode_escape").replace('\\', '')[1:-1]]
-        # files
-        else:
-            js2 = self.js[1]
-            pattern = re.compile("[{]\\\\[^}]+[}]+")
-            d = re.findall(pattern, js2)
-            # escape
-            d = [i.replace('\\\\', '\\').decode('unicode_escape').replace('\\', '') for i in d]
-        d = map(json.loads, d)
-        for i in d:
-            # if wrong json
-            if i.get('fs_id') is None:
-                continue
-            if i.get('isdir') == '1':
-                seq = self._get_folder(i.get('path'))
-                for k, j in seq:
-                    self.filenames.append(k)
-                    self.fid_list.append(j)
-                continue
-            self.fid_list.append(i.get('fs_id'))
-            self.filenames.append(i.get('server_filename').encode('utf-8'))
-
-    def _get_folder(self, path):
-        # 13 digit unix timestamp
-        seq = []
-        t1 = int(time() * 1000)
-        t2 = t1 + 6
-        # interval
-        tt = 1.03
-        url = "http://pan.baidu.com/share/list?channel=chunlei&clienttype=0&web=1&num=100&t={t1}" \
-              "&page=1&dir={path}&t={tt}d&uk={self.uk}&shareid={self.shareid}&order=time&desc=1" \
-              "&_={t2}&bdstoken={self.bdstoken}".format(t1=t1, path=path, tt=tt, self=self, t2=t2)
-        log_message = {'method': 'GET', 'type': 'url'}
-        logger.debug(url, extra=log_message)
-        html = Pan.opener.open(url)
-        j = json.load(html)
-        for i in j.get('list', []):
-            seq.append((i.get('server_filename'), i.get('fs_id')))
-        return seq
-
-
-class Pan(object):
-    cookjar = cookielib.LWPCookieJar()
-    if os.access(global_config.cookies, os.F_OK):
-        cookjar.load(global_config.cookies)
-    opener = urllib2.build_opener(
-        urllib2.HTTPCookieProcessor(cookjar)
-    )
-    opener.addheaders = [
-        ('User-Agent', 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:26.0) Gecko/20100101 Firefox/26.0')
-    ]
-
-    def __init__(self, bdlink, secret=""):
-        self.secret = secret
-        self.bdlink = bdlink
-        file_info = FileInfo(self._get_js())
-        self.filenames = file_info.filenames
-        self.bdstoken = file_info.bdstoken
-        self.fid_list = file_info.fid_list
-        self.uk = file_info.uk
-        self.shareid = file_info.shareid
-        self.timestamp = file_info.timestamp
-        self.sign = file_info.sign
-
-    def _get_json(self, fs_id, input_code=None, vcode=None):
-        """Post fs_id to get json of real download links"""
-        url = 'http://pan.baidu.com/share/download?channel=chunlei&clienttype=0&web=1' \
-              '&uk={self.uk}&shareid={self.shareid}&timestamp={self.timestamp}&sign={self.sign}{bdstoken}{input_code}' \
-              '{vcode}&channel=chunlei&clienttype=0&web=1'.format(self=self,
-                                                                  bdstoken=convert_none('&bdstoken=', self.bdstoken),
-                                                                  input_code=convert_none('&input=', input_code),
-                                                                  vcode=convert_none('&vcode=', vcode))
-        log_message = {'type': 'url', 'method': 'POST'}
-        logger.debug(url, extra=log_message)
-        post_data = 'fid_list=["{}"]'.format(fs_id)
-        log_message = {'type': 'post data', 'method': 'POST'}
-        logger.debug(post_data, extra=log_message)
-        req = self.opener.open(url, post_data)
-        json_data = json.load(req)
-        return json_data
-
-    def _get_home_file_dlink(self, fs_id, sign):
-        """Post fs_id to get home file dlink"""
-        url = 'http://pan.baidu.com/api/download?channel=chunlei&clienttype=0&web=1&app_id=250528' \
-              '{bdstoken}'.format(bdstoken=convert_none("&bdstoken=", self.bdstoken))
-        log_message = {'type': 'url', 'method': 'POST'}
-        logger.debug(url, extra=log_message)
-        post_data = 'fidlist=[{fs_id}]&timestamp={t}&sign={sign}' \
-                    '&type=dlink'.format(fs_id=fs_id, sign=sign, t=str(int(time())))
-        log_message = {'type': 'post data', 'method': 'POST'}
-        logger.debug(post_data, extra=log_message)
-        req = self.opener.open(url, post_data)
-        json_data = json.load(req)
-        return json_data
-
-    # TODO: Cacahe support (decorator)
-    # TODO: Save download status
-    def _get_link(self, fs_id):
-        """Get real download link by fs_id( file's id)"""
-        data = self._get_json(fs_id)
-        log_message = {'type': 'JSON', 'method': 'GET'}
-        logger.debug(data, extra=log_message)
-        if not data.get('errno'):
-            return data.get('dlink').encode('utf-8')
-        elif data.get('errno') == -19:
-            vcode = data.get('vcode')
-            img = data.get('img')
-            self.save(img)
-            input_code = raw_input("请输入看到的验证码\n")
-            data = self._get_json(fs_id, vcode=vcode, input_code=input_code)
-            if not data.get('errno'):
-                return data.get('dlink').encode('utf-8')
-            else:
-                raise VerificationError("验证码错误\n")
-        else:
-            raise UnknownError
-
-    @property
-    def info(self):
-        fs_id = self.fid_list.pop()
-        filename = self.filenames.pop()
-        link = self._get_link(fs_id)
-        return link, filename, len(self.fid_list)
-
-
-class Album(object):
-    def __init__(self, album_id, uk):
-        self._album_id = album_id
-        self._uk = uk
-        self._limit = 100
-        self._filename = []
-        self._links = []
-        self._get_info()
-
-    def __len__(self):
-        return len(self._links)
-
-    def _get_info(self):
-        """Get album's files info which has filename and download link. (And md5, file size)"""
-        url = "http://pan.baidu.com/pcloud/album/listfile?album_id={self._album_id}&query_uk={self._uk}&start=0" \
-              "&limit={self._limit}&channel=chunlei&clienttype=0&web=1".format(self=self)
-        res = Pan.opener.open(url)
-        data = json.load(res)
-        if not data.get('errno'):
-            filelist = data.get('list')
-            for i in filelist:
-                # if is dir, ignore it
-                if i.get('isdir'):
-                    continue
-                else:
-                    self._filename.append(i.get('server_filename'))
-                    self._links.append(i.get('dlink'))
-                    # TODO: md5
-                    # self._md5.append(i.get('md5'))
-                    # size
-                    # self._size.append(i.get('size'))
-        else:
-            raise UnknownError
-
-    @property
-    def info(self):
-        filename = self._filename.pop()
-        link = self._links.pop()
-        return link, filename, len(self)
+    def match(self, js):
+        _filename = re.search(self.filename_pattern, js)
+        if _filename:
+            self.filename = _filename.group(1)
+        data = re.findall(self.pattern, js)
+        if not data:
+            return False
+        yun_data = dict([i.split(' = ', 1) for i in data])
+        logger.debug(yun_data, extra={'method': 'GET', 'type': 'javascript'})
+        if 'single' not in yun_data.get('SHAREPAGETYPE') or '0' in yun_data.get('LOGINSTATUS'):
+            return False
+        self.uk = yun_data.get('MYUK').strip('"')
+        # self.bduss = yun_data.get('MYBDUSS').strip('"')
+        self.share_id = yun_data.get('SHARE_ID').strip('"')
+        self.fid_list = yun_data.get('FS_ID').strip('"')
+        self.sign = yun_data.get('SIGN').strip('"')
+        self.bdstoken = yun_data.get('MYBDSTOKEN').strip('"')
+        if self.bdstoken:
+            return True
+        return False
 
 
 class VerificationError(Exception):
