@@ -11,7 +11,7 @@ import bddown_help
 __all__ = [
     "bd_help",
     "usage",
-    "parse_url"
+    "parse_url",
     "add_http",
     "convert_none",
     "bcolor",
@@ -178,7 +178,7 @@ def get_logger(logger_name):
     handler = logging.StreamHandler()
     handler.setFormatter(fmt)
     alogger.addHandler(handler)
-    alogger.setLevel(logging.INFO)
+    alogger.setLevel(logging.DEBUG)
     return alogger
 
 
