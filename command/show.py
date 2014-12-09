@@ -11,9 +11,7 @@ def show(links):
         bd_help('show')
     else:
         for url in links:
-            pan = Pan(url)
-            count = 1
-            while count != 0:
-                link, filename, count = pan.info
-                print("{0}\n{1}\n\n".format(filename, link))
+            pan = Pan()
+            info = pan.get_dlink(url)
+            print(u"{0}\n{1}\n\n".format(info.filename, info.dlink))
     sys.exit(0)
