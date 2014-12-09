@@ -202,7 +202,7 @@ class FileInfo(object):
     def match(self, js):
         _filename = re.search(self.filename_pattern, js)
         if _filename:
-            self.filename = _filename.group(1)
+            self.filename = _filename.group(1).decode('unicode_escape')
         data = re.findall(self.pattern, js)
         if not data:
             return False
