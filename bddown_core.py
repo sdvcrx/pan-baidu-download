@@ -105,21 +105,29 @@ class Pan(object):
                 'fid_list': '[{0}]'.format(info.fid_list)
             }
             url = BAIDUPAN_SERVER + 'sharedownload'
-            response = self._request('POST', url, extra_params=extra_params, post_data=post_form)
-            if response.ok:
+            while True:
+                response = self._request('POST', url, extra_params=extra_params, post_data=post_form)
+                if not response.ok:
+                    raise UnknownError
                 _json = response.json()
                 errno = _json['errno']
-                while errno == -20:
-                    verify_params = self._handle_captcha(info.bdstoken)
-                    post_form.update(verify_params)
-                    response = self._request('POST', url, extra_params=extra_params, post_data=post_form)
-                    _json = response.json()
-                    errno = _json['errno']
                 logger.debug(_json, extra={'type': 'json', 'method': 'POST'})
                 if errno == 0:
                     # FIXME: only support single file for now
                     dlink = _json['list'][0]['dlink']
                     setattr(info, 'dlink', dlink)
+                    break
+                elif errno == -20:
+                    verify_params = self._handle_captcha(info.bdstoken)
+                    post_form.update(verify_params)
+                    response = self._request('POST', url, extra_params=extra_params, post_data=post_form)
+                    _json = response.json()
+                    errno = _json['errno']
+                    continue
+                elif errno == 113:
+                    continue
+                elif errno == 116:
+                    raise DownloadError("The share file does not exist")
                 else:
                     raise UnknownError
         return info
