@@ -178,7 +178,7 @@ def get_logger(logger_name):
     handler = logging.StreamHandler()
     handler.setFormatter(fmt)
     alogger.addHandler(handler)
-    alogger.setLevel(logging.DEBUG)
+    alogger.setLevel(logging.INFO)
     return alogger
 
 
