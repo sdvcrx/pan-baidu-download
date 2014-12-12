@@ -96,7 +96,7 @@ class Pan(object):
         info = FileInfo()
         js = self._get_js(link, secret)
         if info.match(js):
-            extra_params = dict(bdstoken=info.bdstoken, sign=info.sign, timestamp=str(int(time())))
+            extra_params = dict(bdstoken=info.bdstoken, sign=info.sign, timestamp=info.timestamp)
             post_form = {
                 'encrypt': '0',
                 'product': 'share',
@@ -123,8 +123,6 @@ class Pan(object):
                     response = self._request('POST', url, extra_params=extra_params, post_data=post_form)
                     _json = response.json()
                     errno = _json['errno']
-                    continue
-                elif errno == 113:
                     continue
                 elif errno == 116:
                     raise DownloadError("The share file does not exist")
@@ -200,6 +198,7 @@ class FileInfo(object):
         self.fid_list = None
         self.sign = None
         self.filename = None
+        self.timestamp = None
 
     def __call__(self, js):
         return self.match(js)
@@ -224,6 +223,7 @@ class FileInfo(object):
         self.fid_list = yun_data.get('FS_ID').strip('"')
         self.sign = yun_data.get('SIGN').strip('"')
         self.bdstoken = yun_data.get('MYBDSTOKEN').strip('"')
+        self.timestamp = yun_data.get('TIMESTAMP').strip('"')
         if self.bdstoken:
             return True
         return False
