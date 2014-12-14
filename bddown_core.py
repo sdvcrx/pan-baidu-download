@@ -215,18 +215,19 @@ class FileInfo(object):
             return False
         yun_data = dict([i.split(' = ', 1) for i in data])
         logger.debug(yun_data, extra={'method': 'GET', 'type': 'javascript'})
-        if 'single' not in yun_data.get('SHAREPAGETYPE') or '0' in yun_data.get('LOGINSTATUS'):
-            return False
+        #if 'single' not in yun_data.get('SHAREPAGETYPE') or '0' in yun_data.get('LOGINSTATUS'):
+        #    return False
         self.uk = yun_data.get('MYUK').strip('"')
         # self.bduss = yun_data.get('MYBDUSS').strip('"')
         self.share_id = yun_data.get('SHARE_ID').strip('"')
         self.fid_list = yun_data.get('FS_ID').strip('"')
         self.sign = yun_data.get('SIGN').strip('"')
-        self.bdstoken = yun_data.get('MYBDSTOKEN').strip('"')
+        if yun_data.get('MYBDSTOKEN'):
+            self.bdstoken = yun_data.get('MYBDSTOKEN').strip('"')
         self.timestamp = yun_data.get('TIMESTAMP').strip('"')
-        if self.bdstoken:
-            return True
-        return False
+        #if self.bdstoken:
+        #    return True
+        return True
 
 
 class VerificationError(Exception):

@@ -12,6 +12,8 @@ from config import global_config
 
 
 def download_command(filename, link, cookies, limit=None, output_dir=None):
+    reload(sys)
+    sys.setdefaultencoding("utf-8")
     bool(output_dir) and not os.path.exists(output_dir) and os.makedirs(output_dir)
     print("\033[32m" + filename + "\033[0m")
     pan_ua = 'netdisk;4.4.0.6;PC;PC-Windows;6.2.9200;WindowsBaiduYunGuanJia'
