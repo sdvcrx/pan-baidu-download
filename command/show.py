@@ -13,5 +13,5 @@ def show(links):
         for url in links:
             pan = Pan()
             info = pan.get_dlink(url)
-            print(u"{0}\n{1}\n\n".format(info.filename, info.dlink))
+            print(u"{0}\n{1}\n\n".format(info.filename, info.dlink).encode('utf-8'))
     sys.exit(0)
