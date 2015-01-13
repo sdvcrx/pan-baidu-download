@@ -148,7 +148,7 @@ class Pan(object):
         url = "{0}&t={1}&".format(url.replace('init', 'verify'), int(time()))
         logger.debug(url, extra={'type': 'url', 'method': 'POST'})
         r = self.session.post(url=url, data=data, headers=self.headers)
-        mesg = r.json
+        mesg = r.json()
         logger.debug(mesg, extra={'type': 'JSON', 'method': 'POST'})
         errno = mesg.get('errno')
         if errno == -63:
