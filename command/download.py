@@ -19,9 +19,9 @@ def download_command(filename, link, cookies, limit=None, output_dir=None):
     pan_ua = 'netdisk;4.4.0.6;PC;PC-Windows;6.2.9200;WindowsBaiduYunGuanJia'
     cmd = "aria2c -c -o '{filename}' -s5 -x5" \
           " --user-agent='{useragent}' --header 'Referer:http://pan.baidu.com/disk/home'" \
-          " --header 'Cookies: {cookies}' {limit} {dir}" \
+          " {cookies} {limit} {dir}" \
           " '{link}'".format(filename=filename, useragent=pan_ua, link=link,
-                             cookies=cookies,
+                             cookies=convert_none("--header 'Cookies: '", cookies),
                              limit=convert_none('--max-download-limit=', limit),
                              dir=convert_none('--dir=', output_dir))
     subprocess.call(cmd, shell=True)
@@ -54,7 +54,7 @@ def download(args):
         if res.get('type') == 1:
             pan = Pan()
             info = pan.get_dlink(url, secret)
-            cookies = 'BDUSS={0}'.format(pan.bduss)
+            cookies = 'BDUSS={0}'.format(pan.bduss) if pan.bduss else ''
             download_command(info.filename, info.dlink, cookies=cookies, limit=limit, output_dir=output_dir)
 
         # album
