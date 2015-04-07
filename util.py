@@ -79,7 +79,11 @@ def parse_url(url):
         return {'type': 0}
 
 
-add_http = lambda url: url if url.startswith('http://') else 'http://' + url
+def add_http(url):
+    if url.startswith('http://') or url.startswith('https://'):
+        return url
+    else:
+        return 'http://' + url
 
 convert_none = lambda opt, arg: opt + arg if arg else ""
 
