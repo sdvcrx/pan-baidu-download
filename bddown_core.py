@@ -6,6 +6,10 @@ import re
 import os
 import pickle
 from time import time
+try:
+    from urllib import unquote as url_unquote
+except ImportError:
+    from urllib.parse import unquote as url_unquote
 
 import requests
 
@@ -102,7 +106,8 @@ class Pan(object):
                 'product': 'share',
                 'uk': info.uk,
                 'primaryid': info.share_id,
-                'fid_list': '[{0}]'.format(info.fid_list)
+                'fid_list': '[{0}]'.format(info.fid_list),
+                'extra': '{"sekey":"%s"}' % (url_unquote(self.cookies['BDCLND'])),
             }
             url = BAIDUPAN_SERVER + 'sharedownload'
             while True:
