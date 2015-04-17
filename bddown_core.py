@@ -30,8 +30,8 @@ class Pan(object):
         self.bduss = ''
         self.bdstoken = ''
         self.session = requests.Session()
-        self.cookies = self.session.cookies
         self._load_cookies_from_file()
+        self.cookies = self.session.cookies
 
     def _load_cookies_from_file(self):
         """Load cookies file if file exist."""
@@ -41,8 +41,8 @@ class Pan(object):
             self.session.cookies = cookies
             # NOT SURE stoken is bdstoken!
             # self.token = self.session.cookies.get('STOKEN')
-            self.baiduid = self.cookies.get('BAIDUID')
-            self.bduss = self.cookies.get('BDUSS')
+            self.baiduid = self.session.cookies.get('BAIDUID')
+            self.bduss = self.session.cookies.get('BDUSS')
             return True
         return False
 
@@ -107,8 +107,11 @@ class Pan(object):
                 'uk': info.uk,
                 'primaryid': info.share_id,
                 'fid_list': '[{0}]'.format(info.fid_list),
-                'extra': '{"sekey":"%s"}' % (url_unquote(self.cookies['BDCLND'])),
             }
+            if self.session.cookies.get('BDCLND'):
+                post_form['extra'] = '{"sekey":"%s"}' % (url_unquote(self.session.cookies['BDCLND'])),
+            logger.debug(post_form, extra={'type': 'form', 'method': 'POST'})
+
             url = BAIDUPAN_SERVER + 'sharedownload'
             while True:
                 response = self._request('POST', url, extra_params=extra_params, post_data=post_form)
