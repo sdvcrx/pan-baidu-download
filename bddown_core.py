@@ -232,7 +232,7 @@ class FileInfo(object):
         logger.debug(yun_data, extra={'method': 'GET', 'type': 'javascript'})
         #if 'single' not in yun_data.get('SHAREPAGETYPE') or '0' in yun_data.get('LOGINSTATUS'):
         #    return False
-        self.uk = yun_data.get('MYUK').strip('"')
+        self.uk = yun_data.get('SHARE_UK').strip('"')
         # self.bduss = yun_data.get('MYBDUSS').strip('"')
         self.share_id = yun_data.get('SHARE_ID').strip('"')
         self.fid_list = yun_data.get('FS_ID').strip('"')
