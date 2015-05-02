@@ -29,6 +29,7 @@ class Pan(object):
         self.baiduid = ''
         self.bduss = ''
         self.bdstoken = ''
+        self.pcsett = ''
         self.session = requests.Session()
         self._load_cookies_from_file()
         self.cookies = self.session.cookies
@@ -99,6 +100,12 @@ class Pan(object):
     def get_dlink(self, link, secret=None):
         info = FileInfo()
         js = self._get_js(link, secret)
+
+        # Fix #15
+        self.session.get('http://pcs.baidu.com/rest/2.0/pcs/file?method=plantcookie&type=ett')
+        self.pcsett = self.session.cookies.get('pcsett')
+        logger.debug(self.pcsett, extra={'type': 'cookies', 'method': 'SetCookies'})
+
         if info.match(js):
             extra_params = dict(bdstoken=info.bdstoken, sign=info.sign, timestamp=info.timestamp)
             post_form = {

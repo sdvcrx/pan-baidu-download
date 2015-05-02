@@ -21,7 +21,7 @@ def download_command(filename, link, cookies, limit=None, output_dir=None):
           ' --user-agent="{useragent}" --header "Referer:http://pan.baidu.com/disk/home"' \
           ' {cookies} {limit} {dir}' \
           ' "{link}"'.format(filename=filename, useragent=pan_ua, link=link,
-                             cookies=convert_none("--header \"Cookies: \"", cookies),
+                             cookies=convert_none("--header \"Cookies: ", cookies),
                              limit=convert_none('--max-download-limit=', limit),
                              dir=convert_none('--dir=', output_dir))
     subprocess.call(cmd, shell=True)
@@ -55,6 +55,10 @@ def download(args):
             pan = Pan()
             info = pan.get_dlink(url, secret)
             cookies = 'BDUSS={0}'.format(pan.bduss) if pan.bduss else ''
+            if cookies and pan.pcsett:
+                cookies += ';pcsett={0}'.format(pan.pcsett)
+            if cookies:
+                cookies += '"'
             download_command(info.filename, info.dlink, cookies=cookies, limit=limit, output_dir=output_dir)
 
         # album
