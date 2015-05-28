@@ -61,6 +61,18 @@ def download(args):
                 cookies += '"'
             download_command(info.filename, info.dlink, cookies=cookies, limit=limit, output_dir=output_dir)
 
+        elif res.get('type') == 4:
+            pan = Pan()
+            fsid = res.get('fsid')
+            newUrl = res.get('url')
+            info = pan.get_dlink(newUrl, secret, fsid)
+            cookies = 'BDUSS={0}'.format(pan.bduss) if pan.bduss else ''
+            if cookies and pan.pcsett:
+                cookies += ';pcsett={0}'.format(pan.pcsett)
+            if cookies:
+                cookies += '"'
+            download_command(info.filename, info.dlink, cookies=cookies, limit=limit, output_dir=output_dir)
+
         # album
         elif res.get('type') == 2:
             raise NotImplementedError('This function has not implemented.')

@@ -65,6 +65,9 @@ def parse_url(url):
     elif 'init' in result.path:
         return {'type': 1}
 
+    # FIXME: Url could be the album type
+    # eg: http://pan.baidu.com/wap/album/info?uk=2166491526&album_id=4852578710285570610&third=0
+    # and http://pan.baidu.com/wap/album/file?uk=2166491526&album_id=4852578710285570610&fsid=1086862507948619
     # http://pan.baidu.com/pcloud/album/info?uk=3943531277&album_id=1553987381796453514
     elif 'album' in result.path:
         info = dict(urlparse.parse_qsl(result.query))
@@ -75,6 +78,19 @@ def parse_url(url):
     # http://pan.baidu.com/share/home?uk=NUMBER
     elif 'home' in result.path and result.query:
         return {'type': 3}
+
+    # Fix #17
+    # Workaround: Redirect wap page to PC page
+    elif 'wap' in result.path and 'fsid' in result.query:
+        params = urlparse.parse_qs(result.query)
+        fs_id = params.get('fsid')
+        share_id = params.get('shareid')
+        uk = params.get('uk')
+        if not fs_id or not share_id or not uk:
+            return {'type': 2}
+        url = 'http://pan.baidu.com/share/link?uk={uk}&shareid={shareid}'.format(uk=uk[0], shareid=share_id[0])
+        return {'type': 4, 'fsid': fs_id[0], 'url': url}
+
     else:
         return {'type': 0}
 

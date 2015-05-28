@@ -97,7 +97,7 @@ class Pan(object):
         js = re.findall(js_pattern, data)
         return js[0] or None
 
-    def get_dlink(self, link, secret=None):
+    def get_dlink(self, link, secret=None, fsid=None):
         info = FileInfo()
         js = self._get_js(link, secret)
 
@@ -107,6 +107,11 @@ class Pan(object):
         logger.debug(self.pcsett, extra={'type': 'cookies', 'method': 'SetCookies'})
 
         if info.match(js):
+            # Fix #17
+            # Need to update fsid if we download it by providing fsid way
+            if fsid:
+                info.fid_list = fsid
+
             extra_params = dict(bdstoken=info.bdstoken, sign=info.sign, timestamp=info.timestamp)
             post_form = {
                 'encrypt': '0',
@@ -131,6 +136,12 @@ class Pan(object):
                     # FIXME: only support single file for now
                     dlink = _json['list'][0]['dlink']
                     setattr(info, 'dlink', dlink)
+
+                    # Fix #17
+                    # Need to update filename if we download it by providing fsid way
+                    if fsid:
+                        info.filename = _json['list'][0]['server_filename']
+
                     break
                 elif errno == -20:
                     verify_params = self._handle_captcha(info.bdstoken)
