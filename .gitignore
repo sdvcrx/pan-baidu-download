@@ -42,5 +42,6 @@ nosetests.xml
 data/*
 test/*
 
-# jpg
+# vcode
 *.jpg
+*.gif

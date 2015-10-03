@@ -45,6 +45,7 @@ class BaiduAccount(object):
                           '&username={self.username}&time={self._time}'.format(self=self)
         self._token_url = 'https://passport.baidu.com/v2/api/?getapi&class=login&tpl=mn&tangram=true'
         self._post_url = 'https://passport.baidu.com/v2/api/?login'
+        self._genimage_url = 'https://passport.baidu.com/cgi-bin/genimage?{code}'
         # debug:
         # self._post_url = 'http://httpbin.org/post'
         self.token = ''
@@ -65,9 +66,19 @@ class BaiduAccount(object):
         data = json.loads(s[s.index('{'):-1])
         log_message = {'type': 'check loging verify code', 'method': 'GET'}
         logger.debug(data, extra=log_message)
-        # TODO: 验证码
-        if data.get('errno'):
+        if data.get('codestring'):
             self.codestring = data.get('codestring')
+
+    def _handle_verify_code(self):
+        """Save verify code to filesystem and prompt user to input."""
+        r = self.session.get(self._genimage_url.format(code=self.codestring))
+        # TODO: Handle different verify code image format: jpg or gif
+        img_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'vcode.jpg')
+        with open(img_path, mode='wb') as fp:
+            fp.write(r.content)
+        print("Saved verification code to {}".format(os.path.dirname(img_path)))
+        vcode = raw_input("Please input the captcha:\n")
+        return vcode
 
     def _get_token(self):
         """Get bdstoken."""
@@ -81,13 +92,13 @@ class BaiduAccount(object):
         except:
             raise GetTokenError("Can't get the token")
 
-    def _post_data(self):
+    def _post_data(self, code):
         """Post login form."""
-        post_data = {'ppui_logintime': '9379', 'charset': 'utf-8', 'codestring': '', 'token': self.token,
+        post_data = {'ppui_logintime': '9379', 'charset': 'utf-8', 'codestring': self.codestring, 'token': self.token,
                      'isPhone': 'false', 'index': '0', 'u': '', 'safeflg': 0,
                      'staticpage': 'http://www.baidu.com/cache/user/html/jump.html', 'loginType': '1', 'tpl': 'mn',
                      'callback': 'parent.bdPass.api.login._postCallback', 'username': self.username,
-                     'password': self.passwd, 'verifycode': '', 'mem_pass': 'on'}
+                     'password': self.passwd, 'verifycode': code, 'mem_pass': 'on'}
         # post_data = urlencode(post_data)
         log_message = {'type': 'login post data', 'method': 'POST'}
         logger.debug(post_data, extra=log_message)
@@ -105,14 +116,14 @@ class BaiduAccount(object):
             pickle.dump(requests.utils.dict_from_cookiejar(self.session.cookies), f)
 
     def login(self):
+        code = ''
         self._get_baidu_uid()
         self._check_verify_code()
         if self.codestring:
-            # TODO: 验证码处理
-            pass
+            code = self._handle_verify_code()
         self._get_token()
-        self._post_data()
-        if not self.bduss and not self.baiduid:
+        self._post_data(code)
+        if not self.bduss or not self.baiduid:
             raise LoginError('登陆异常')
         self._save_cookies()
 
