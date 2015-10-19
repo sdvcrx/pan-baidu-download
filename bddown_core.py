@@ -102,7 +102,7 @@ class Pan(object):
         js = self._get_js(link, secret)
 
         # Fix #15
-        self.session.get('http://pcs.baidu.com/rest/2.0/pcs/file?method=plantcookie&type=ett')
+        self.session.get('http://d.pcs.baidu.com/rest/2.0/pcs/file?method=plantcookie&type=ett')
         self.pcsett = self.session.cookies.get('pcsett')
         logger.debug(self.pcsett, extra={'type': 'cookies', 'method': 'SetCookies'})
 
