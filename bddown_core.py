@@ -4,6 +4,7 @@ from __future__ import print_function
 
 import re
 import os
+import json
 import pickle
 from time import time
 try:
@@ -17,7 +18,7 @@ from util import logger
 from command.config import global_config
 
 BAIDUPAN_SERVER = "http://pan.baidu.com/api/"
-
+DLTYPE_MULTIPLE = 'multi_file'
 
 class Pan(object):
     headers = {
@@ -98,7 +99,7 @@ class Pan(object):
         return js[0] or None
 
     def get_dlink(self, link, secret=None, fsid=None):
-        info = FileInfo()
+        info = ShareInfo()
         js = None
         try:
             js = self._get_js(link, secret)
@@ -118,12 +119,15 @@ class Pan(object):
                 info.fid_list = fsid
 
             extra_params = dict(bdstoken=info.bdstoken, sign=info.sign, timestamp=info.timestamp)
+            if info.sharepagetype == DLTYPE_MULTIPLE:
+                extra_params['type'] = 'batch'
+
             post_form = {
                 'encrypt': '0',
                 'product': 'share',
                 'uk': info.uk,
                 'primaryid': info.share_id,
-                'fid_list': '[{0}]'.format(info.fid_list),
+                'fid_list': info.fid_list,
             }
             if self.session.cookies.get('BDCLND'):
                 post_form['extra'] = '{"sekey":"%s"}' % (url_unquote(self.session.cookies['BDCLND'])),
@@ -138,8 +142,10 @@ class Pan(object):
                 errno = _json['errno']
                 logger.debug(_json, extra={'type': 'json', 'method': 'POST'})
                 if errno == 0:
-                    # FIXME: only support single file for now
-                    dlink = _json['list'][0]['dlink']
+                    if info.sharepagetype == DLTYPE_MULTIPLE:
+                        dlink = _json['dlink']
+                    else:
+                        dlink = _json['list'][0]['dlink']
                     setattr(info, 'dlink', dlink)
 
                     # Fix #17
@@ -217,9 +223,10 @@ class Pan(object):
         return response
 
 
-class FileInfo(object):
+class ShareInfo(object):
     pattern = re.compile('yunData\.(\w+\s=\s"\w+");')
     filename_pattern = re.compile('"server_filename":"([^"]+)"', re.DOTALL)
+    fileinfo_pattern = re.compile('yunData\.FILEINFO\s=\s(.*);')
 
     def __init__(self):
         self.share_id = None
@@ -230,17 +237,22 @@ class FileInfo(object):
         self.sign = None
         self.filename = None
         self.timestamp = None
+        self.sharepagetype = None
+        self.fileinfo = None
 
     def __call__(self, js):
         return self.match(js)
 
     def __repr__(self):
-        return '<FileInfo %r>' % self.share_id
+        return '<ShareInfo %r>' % self.share_id
 
     def match(self, js):
         _filename = re.search(self.filename_pattern, js)
+        _fileinfo = re.search(self.fileinfo_pattern, js)
         if _filename:
             self.filename = _filename.group(1).decode('unicode_escape')
+        if _fileinfo:
+            self.fileinfo = json.loads(_fileinfo.group(1).decode('unicode_escape'))
         data = re.findall(self.pattern, js)
         if not data:
             return False
@@ -251,11 +263,14 @@ class FileInfo(object):
         self.uk = yun_data.get('SHARE_UK').strip('"')
         # self.bduss = yun_data.get('MYBDUSS').strip('"')
         self.share_id = yun_data.get('SHARE_ID').strip('"')
-        self.fid_list = yun_data.get('FS_ID').strip('"')
+        self.fid_list = json.dumps([i['fs_id'] for i in self.fileinfo])
         self.sign = yun_data.get('SIGN').strip('"')
         if yun_data.get('MYBDSTOKEN'):
             self.bdstoken = yun_data.get('MYBDSTOKEN').strip('"')
         self.timestamp = yun_data.get('TIMESTAMP').strip('"')
+        self.sharepagetype = yun_data.get('SHAREPAGETYPE').strip('"')
+        if self.sharepagetype == DLTYPE_MULTIPLE:
+            self.filename = os.path.splitext(self.filename)[0] + '-batch.zip'
         #if self.bdstoken:
         #    return True
         return True
