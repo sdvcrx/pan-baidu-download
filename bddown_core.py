@@ -99,7 +99,12 @@ class Pan(object):
 
     def get_dlink(self, link, secret=None, fsid=None):
         info = FileInfo()
-        js = self._get_js(link, secret)
+        js = None
+        try:
+            js = self._get_js(link, secret)
+        except IndexError, e:
+            # Retry with new cookies
+            js = self._get_js(link, secret)
 
         # Fix #15
         self.session.get('http://d.pcs.baidu.com/rest/2.0/pcs/file?method=plantcookie&type=ett')
