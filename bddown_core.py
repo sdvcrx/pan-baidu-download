@@ -4,6 +4,7 @@ from __future__ import print_function
 
 import re
 import os
+import platform
 import pickle
 from time import time
 try:
@@ -17,7 +18,7 @@ from util import logger
 from command.config import global_config
 
 BAIDUPAN_SERVER = "http://pan.baidu.com/api/"
-
+VCODE = 'vcode.jpg'
 
 class Pan(object):
     headers = {
@@ -51,10 +52,17 @@ class Pan(object):
         """Download vcode image and save it to path of source code."""
         r = self.session.get(img_url)
         data = r.content
-        img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'vcode.jpg')
+        img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), VCODE)
         with open(img_path, mode='wb') as fp:
             fp.write(data)
         print("Saved verification code to ", os.path.dirname(os.path.abspath(__file__)))
+
+    def _try_open_img(self, vcode):
+        _platform = platform.system().lower()
+        if _platform == 'darwin':
+            os.system('open ' + vcode)
+        elif _platform == 'windows':
+            os.system('start ' + vcode)
 
     def _handle_captcha(self, bdstoken=None):
         url = BAIDUPAN_SERVER + 'getcaptcha'
@@ -68,6 +76,7 @@ class Pan(object):
         if res.ok:
             t = res.json()
             self._save_img(t['vcode_img'])
+            self._try_open_img(os.path.join(os.path.dirname(os.path.abspath(__file__)), VCODE))
             vcode_input = raw_input("Please input the captcha:\n")
             d['vcode_str'] = t['vcode_str']
             d['vcode_input'] = vcode_input
