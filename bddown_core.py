@@ -22,6 +22,7 @@ BAIDUPAN_SERVER = "http://pan.baidu.com/api/"
 DLTYPE_MULTIPLE = 'multi_file'
 VCODE = 'vcode.jpg'
 
+
 class Pan(object):
     headers = {
         'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko)'
@@ -54,10 +55,12 @@ class Pan(object):
         """Download vcode image and save it to path of source code."""
         r = self.session.get(img_url)
         data = r.content
-        img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), VCODE)
+        img_path = os.path.join(os.path.dirname(
+            os.path.abspath(__file__)), VCODE)
         with open(img_path, mode='wb') as fp:
             fp.write(data)
-        print("Saved verification code to ", os.path.dirname(os.path.abspath(__file__)))
+        print("Saved verification code to ",
+              os.path.dirname(os.path.abspath(__file__)))
 
     def _try_open_img(self, vcode):
         _platform = platform.system().lower()
@@ -78,7 +81,8 @@ class Pan(object):
         if res.ok:
             t = res.json()
             self._save_img(t['vcode_img'])
-            self._try_open_img(os.path.join(os.path.dirname(os.path.abspath(__file__)), VCODE))
+            self._try_open_img(os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), VCODE))
             vcode_input = raw_input("Please input the captcha:\n")
             d['vcode_str'] = t['vcode_str']
             d['vcode_input'] = vcode_input
@@ -99,12 +103,13 @@ class Pan(object):
         :type link: str
         :return str or None
         """
-        req = self.session.get(link)
+        req = self.session.get(link, headers=self.headers)
         if 'init' in req.url:
             self.verify_passwd(req.url, secret)
             req = self.session.get(link)
         data = req.text
-        js_pattern = re.compile('<script\stype="text/javascript">!function\(\)([^<]+)</script>', re.DOTALL)
+        js_pattern = re.compile(
+            '<script\stype="text/javascript">!function\(\)([^<]+)</script>', re.DOTALL)
         js = re.findall(js_pattern, data)
         return js[0] or None
 
@@ -118,9 +123,11 @@ class Pan(object):
             js = self._get_js(link, secret)
 
         # Fix #15
-        self.session.get('http://d.pcs.baidu.com/rest/2.0/pcs/file?method=plantcookie&type=ett')
+        self.session.get(
+            'http://d.pcs.baidu.com/rest/2.0/pcs/file?method=plantcookie&type=ett')
         self.pcsett = self.session.cookies.get('pcsett')
-        logger.debug(self.pcsett, extra={'type': 'cookies', 'method': 'SetCookies'})
+        logger.debug(self.pcsett, extra={
+                     'type': 'cookies', 'method': 'SetCookies'})
 
         if info.match(js):
             # Fix #17
@@ -128,7 +135,8 @@ class Pan(object):
             if fsid:
                 info.fid_list = fsid
 
-            extra_params = dict(bdstoken=info.bdstoken, sign=info.sign, timestamp=info.timestamp)
+            extra_params = dict(bdstoken=info.bdstoken,
+                                sign=info.sign, timestamp=info.timestamp)
             if info.sharepagetype == DLTYPE_MULTIPLE:
                 extra_params['type'] = 'batch'
 
@@ -140,12 +148,14 @@ class Pan(object):
                 'fid_list': info.fid_list,
             }
             if self.session.cookies.get('BDCLND'):
-                post_form['extra'] = '{"sekey":"%s"}' % (url_unquote(self.session.cookies['BDCLND'])),
+                post_form['extra'] = '{"sekey":"%s"}' % (
+                    url_unquote(self.session.cookies['BDCLND'])),
             logger.debug(post_form, extra={'type': 'form', 'method': 'POST'})
 
             url = BAIDUPAN_SERVER + 'sharedownload'
             while True:
-                response = self._request('POST', url, extra_params=extra_params, post_data=post_form)
+                response = self._request(
+                    'POST', url, extra_params=extra_params, post_data=post_form)
                 if not response.ok:
                     raise UnknownError
                 _json = response.json()
@@ -159,7 +169,8 @@ class Pan(object):
                     setattr(info, 'dlink', dlink)
 
                     # Fix #17
-                    # Need to update filename if we download it by providing fsid way
+                    # Need to update filename if we download it by providing
+                    # fsid way
                     if fsid:
                         info.filename = _json['list'][0]['server_filename']
 
@@ -167,7 +178,8 @@ class Pan(object):
                 elif errno == -20:
                     verify_params = self._handle_captcha(info.bdstoken)
                     post_form.update(verify_params)
-                    response = self._request('POST', url, extra_params=extra_params, post_data=post_form)
+                    response = self._request(
+                        'POST', url, extra_params=extra_params, post_data=post_form)
                     _json = response.json()
                     errno = _json['errno']
                     continue
@@ -225,9 +237,11 @@ class Pan(object):
             params.update(extra_params)
             self._dict_to_utf8(params)
         if method == 'GET' and base_url:
-            response = self.session.get(base_url, params=params, headers=self.headers, **kwargs)
+            response = self.session.get(
+                base_url, params=params, headers=self.headers, **kwargs)
         elif method == 'POST' and base_url and post_data:
-            response = self.session.post(base_url, data=post_data, params=params, headers=self.headers, **kwargs)
+            response = self.session.post(
+                base_url, data=post_data, params=params, headers=self.headers, **kwargs)
         else:
             response = None
         return response
@@ -262,13 +276,14 @@ class ShareInfo(object):
         if _filename:
             self.filename = _filename.group(1).decode('unicode_escape')
         if _fileinfo:
-            self.fileinfo = json.loads(_fileinfo.group(1).decode('unicode_escape'))
+            self.fileinfo = json.loads(
+                _fileinfo.group(1).decode('unicode_escape'))
         data = re.findall(self.pattern, js)
         if not data:
             return False
         yun_data = dict([i.split(' = ', 1) for i in data])
         logger.debug(yun_data, extra={'method': 'GET', 'type': 'javascript'})
-        #if 'single' not in yun_data.get('SHAREPAGETYPE') or '0' in yun_data.get('LOGINSTATUS'):
+        # if 'single' not in yun_data.get('SHAREPAGETYPE') or '0' in yun_data.get('LOGINSTATUS'):
         #    return False
         self.uk = yun_data.get('SHARE_UK').strip('"')
         # self.bduss = yun_data.get('MYBDUSS').strip('"')
@@ -281,7 +296,7 @@ class ShareInfo(object):
         self.sharepagetype = yun_data.get('SHAREPAGETYPE').strip('"')
         if self.sharepagetype == DLTYPE_MULTIPLE:
             self.filename = os.path.splitext(self.filename)[0] + '-batch.zip'
-        #if self.bdstoken:
+        # if self.bdstoken:
         #    return True
         return True
 
