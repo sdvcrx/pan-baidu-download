@@ -52,7 +52,7 @@ linux下可使用以下命令减小敲键盘的数目
 `~/bin` 需要添加到环境变量 `PATH`
 
 ```
-ln -s 你的lixian_cli.py路径 ~/bin/pan
+ln -s 你的bddown_cli.py路径 ~/bin/pan
 ```
 
 ## Quick start
