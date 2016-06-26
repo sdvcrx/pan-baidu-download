@@ -45,7 +45,7 @@ class Pan(object):
                 cookies = requests.utils.cookiejar_from_dict(pickle.load(f))
             self.session.cookies = cookies
             # NOT SURE stoken is bdstoken!
-            # self.token = self.session.cookies.get('STOKEN')
+            self.token = self.session.cookies.get('STOKEN')
             self.baiduid = self.session.cookies.get('BAIDUID')
             self.bduss = self.session.cookies.get('BDUSS')
             return True
@@ -233,7 +233,7 @@ class Pan(object):
             'clienttype': 0,
             'web': 1,
             'app_id': 250528,
-            'bdstoken': self.cookies.get('STOKEN')
+            'bdstoken': self.bdstoken,
         }
         if isinstance(extra_params, dict):
             params.update(extra_params)
