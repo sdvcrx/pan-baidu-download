@@ -73,7 +73,7 @@ class BaiduAccount(object):
         """Save verify code to filesystem and prompt user to input."""
         r = self.session.get(self._genimage_url.format(code=self.codestring))
         # TODO: Handle different verify code image format: jpg or gif
-        img_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'vcode.jpg')
+        img_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'vcode.png')
         with open(img_path, mode='wb') as fp:
             fp.write(r.content)
         print("Saved verification code to {}".format(os.path.dirname(img_path)))
@@ -106,10 +106,18 @@ class BaiduAccount(object):
         s = response.text
         log_message = {'type': 'response', 'method': 'POST'}
         logger.debug(s, extra=log_message)
-        self.bduss = response.cookies.get("BDUSS")
-        log_message = {'type': 'BDUSS', 'method': 'GET'}
-        logger.debug(self.bduss, extra=log_message)
-        return s
+        if 'error=257' in s:
+            try:
+                self.codestring = re.findall('codestring=(.*?)&', s)[0]
+                captcha = self._handle_verify_code()
+                self._post_data(captcha)
+            except Exception:
+                raise LoginError('获取登录验证码失败')
+        else:
+            self.bduss = response.cookies.get("BDUSS")
+            log_message = {'type': 'BDUSS', 'method': 'GET'}
+            logger.debug(self.bduss, extra=log_message)
+            return s
 
     def _save_cookies(self):
         with open(self.cookie_filename, 'w') as f:
