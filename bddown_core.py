@@ -205,10 +205,12 @@ class Pan(object):
         else:
             # FIXME: Improve translation
             pwd = raw_input("Please input this sharing password\n")
-        data = {'pwd': pwd, 'vcode': ''}
-        url = "{0}&t={1}&".format(url.replace('init', 'verify'), int(time()))
+        data = {'pwd': pwd, 'vcode': '', 'vcode_str': ''}
+        verify_url = "{0}&t={1}&channel=chunlei&clienttype=0&web=1".format(url.replace('init', 'verify'), int(time()))
         logger.debug(url, extra={'type': 'url', 'method': 'POST'})
-        r = self.session.post(url=url, data=data, headers=self.headers)
+        headers = self.headers.copy()
+        headers['Referer'] = url
+        r = self.session.post(url=verify_url, data=data, headers=headers)
         mesg = r.json()
         logger.debug(mesg, extra={'type': 'JSON', 'method': 'POST'})
         errno = mesg.get('errno')
