@@ -5,6 +5,10 @@ from __future__ import print_function
 import base64
 import urlparse
 import logging
+import pickle
+from requests.utils import dict_from_cookiejar
+
+from command.config import global_config
 
 import bddown_help
 
@@ -198,8 +202,14 @@ def get_logger(logger_name):
     handler = logging.StreamHandler()
     handler.setFormatter(fmt)
     alogger.addHandler(handler)
-    alogger.setLevel(logging.INFO)
+    alogger.setLevel(logging.DEBUG)
     return alogger
 
 
+def save_cookies(cookies):
+    with open(global_config.cookies, 'w') as f:
+        pickle.dump(dict_from_cookiejar(cookies), f)
+
+
 logger = get_logger('pan')
+

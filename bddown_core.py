@@ -15,6 +15,7 @@ except ImportError:
 
 import requests
 
+import util
 from util import logger
 from command.config import global_config
 
@@ -105,10 +106,13 @@ class Pan(object):
         :type link: str
         :return str or None
         """
+        if len(self.cookies) == 0:
+            req = self.session.get(link, headers=self.headers)
         req = self.session.get(link, headers=self.headers)
         if 'init' in req.url:
             self.verify_passwd(req.url, secret)
             req = self.session.get(link)
+        util.save_cookies(self.session.cookies)
         data = req.text
         js_pattern = re.compile(
             '<script\stype="text/javascript">!function\(\)([^<]+)</script>', re.DOTALL)

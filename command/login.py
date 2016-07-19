@@ -5,11 +5,11 @@ from time import time
 import json
 import re
 import os
-import pickle
 
 from requests import Session
 import requests.utils
 
+import util
 from util import logger
 from config import global_config
 
@@ -22,7 +22,7 @@ class BaiduAccount(object):
                       '(KHTML, like Gecko) Chrome/32.0.1700.77 Safari/537.36',
     }
 
-    def __init__(self, username, passwd, cookie_filename):
+    def __init__(self, username, passwd):
         """
         Login and save cookies to file.
 
@@ -31,12 +31,10 @@ class BaiduAccount(object):
         :type cookie_filename: str
         :param username: Baidu username.
         :param passwd: Baidu account password.
-        :param cookie_filename: cookies file name.
         :return: None
         """
         self.username = username
         self.passwd = passwd
-        self.cookie_filename = cookie_filename
         self.session = Session()
         self.codestring = ''
         self._time = int(time())
@@ -119,10 +117,6 @@ class BaiduAccount(object):
             logger.debug(self.bduss, extra=log_message)
             return s
 
-    def _save_cookies(self):
-        with open(self.cookie_filename, 'w') as f:
-            pickle.dump(requests.utils.dict_from_cookiejar(self.session.cookies), f)
-
     def login(self):
         code = ''
         self._get_baidu_uid()
@@ -133,7 +127,7 @@ class BaiduAccount(object):
         self._post_data(code)
         if not self.bduss or not self.baiduid:
             raise LoginError('登陆异常')
-        self._save_cookies()
+        util.save_cookies(self.session.cookies)
 
     def load_cookies_from_file(self):
         """Load cookies file if file exist."""
@@ -172,7 +166,6 @@ def login(args):
         passwd = global_config.password
     if not username and not passwd:
         raise LoginError('请输入你的帐号密码！')
-    cookies = global_config.cookies
-    account = BaiduAccount(username, passwd, cookies)
+    account = BaiduAccount(username, passwd)
     account.login()
     print("Saving session to {}".format(cookies))
