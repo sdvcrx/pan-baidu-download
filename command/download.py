@@ -11,19 +11,20 @@ from util import convert_none, parse_url, add_http, logger
 from config import global_config
 
 
-def download_command(filename, link, cookies, limit=None, output_dir=None):
+def download_command(filename, savedir, link, cookies, limit=None, output_dir=None):
     reload(sys)
     sys.setdefaultencoding("utf-8")
     bool(output_dir) and not os.path.exists(output_dir) and os.makedirs(output_dir)
     print("\033[32m" + filename + "\033[0m")
     pan_ua = 'netdisk;5.2.6;PC;PC-Windows;6.2.9200;WindowsBaiduYunGuanJia'
-    cmd = 'aria2c -c -o "{filename}" -s5 -x5' \
+    cmd = 'aria2c -c -d "{savedir}" -o "{filename}" -s10 -x10' \
           ' --user-agent="{useragent}" --header "Referer:http://pan.baidu.com/disk/home"' \
           ' {cookies} {limit} {dir}' \
-          ' "{link}"'.format(filename=filename, useragent=pan_ua, link=link,
+          ' "{link}"'.format(savedir=savedir, filename=filename, useragent=pan_ua, link=link,
                              cookies=convert_none("--header \"Cookies: ", cookies),
                              limit=convert_none('--max-download-limit=', limit),
                              dir=convert_none('--dir=', output_dir))
+    print(cmd)
     subprocess.call(cmd, shell=True)
 
 
@@ -53,13 +54,16 @@ def download(args):
         # normal
         if res.get('type') == 1:
             pan = Pan()
-            info = pan.get_dlink(url, secret)
-            cookies = 'BDUSS={0}'.format(pan.bduss) if pan.bduss else ''
-            if cookies and pan.pcsett:
-                cookies += ';pcsett={0}'.format(pan.pcsett)
-            if cookies:
-                cookies += '"'
-            download_command(info.filename, info.dlink, cookies=cookies, limit=limit, output_dir=output_dir)
+            fis = pan.get_file_infos(url, secret)
+            for fi in fis:
+                cookies = 'BDUSS={0}'.format(pan.bduss) if pan.bduss else ''
+                if cookies and pan.pcsett:
+                    cookies += ';pcsett={0}'.format(pan.pcsett)
+                if cookies:
+                    cookies += '"'
+
+                savedir = fi.path.replace(fi.parent_path, '', 1)[1:]
+                download_command(fi.filename, savedir, fi.dlink, cookies=cookies, limit=limit, output_dir=output_dir)
 
         elif res.get('type') == 4:
             pan = Pan()
