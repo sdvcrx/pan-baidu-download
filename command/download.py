@@ -27,6 +27,42 @@ def download_command(filename, savedir, link, cookies, limit=None, output_dir=No
     print(cmd)
     subprocess.call(cmd, shell=True)
 
+def select_download(fis):
+    if len(fis) <= 1:
+        return fis
+
+    print("File list:")
+    counter = 1
+    for fi in fis:
+        savedir = fi.path.replace(fi.parent_path, '', 1)[1:]
+        print(str(counter) + ') ' + savedir + '/' + fi.filename)
+        counter += 1
+
+    input_numbers = raw_input("Please select files to download(e.g., 1,3-5,7):\n")
+    selected_numbers = []
+    for part in input_numbers.split(','):
+        x = part.split('-')
+        if len(x) == 1:
+            selected_numbers += [int(x[0])]
+        elif len(x) == 2:
+            selected_numbers += range(int(x[0]), int(x[1])+1)
+        else:
+            print("Error, your input seems illegal." + str(len(x)))
+            return None
+
+    # ensure no duplicate numbers
+    selected_numbers = list(set(selected_numbers))
+
+    selected_fis = [fis[i-1] for i in selected_numbers]
+
+    print("Download list:")
+    counter = 1
+    for sfi in selected_fis:
+        savedir = sfi.path.replace(sfi.parent_path, '', 1)[1:]
+        print(str(counter) + ') ' + savedir + '/' + sfi.filename)
+        counter += 1
+
+    return selected_fis
 
 def download(args):
     limit = global_config.limit
@@ -55,6 +91,12 @@ def download(args):
         if res.get('type') == 1:
             pan = Pan()
             fis = pan.get_file_infos(url, secret)
+
+            while True:
+                fis = select_download(fis)
+                if fis is not None:
+                    break
+
             for fi in fis:
                 cookies = 'BDUSS={0}'.format(pan.bduss) if pan.bduss else ''
                 if cookies and pan.pcsett:
