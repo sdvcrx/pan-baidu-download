@@ -20,7 +20,6 @@ from util import logger
 from command.config import global_config
 
 BAIDUPAN_SERVER = "http://pan.baidu.com/api/"
-DLTYPE_MULTIPLE = 'multi_file'
 VCODE = 'vcode.jpg'
 
 
@@ -36,8 +35,9 @@ class Pan(object):
         self.bdstoken = ''
         self.pcsett = ''
         self.session = requests.Session()
-        self._load_cookies_from_file()
+        # self._load_cookies_from_file()
         self.cookies = self.session.cookies
+        self.all_files = []
 
     def _load_cookies_from_file(self):
         """Load cookies file if file exist."""
@@ -100,6 +100,33 @@ class Pan(object):
             if isinstance(v, unicode):
                 dictionary[k] = v.encode('utf-8')
 
+    def bdlist(self, shareinfo, path):
+        url = 'http://pan.baidu.com/share/list'
+        payload = {
+            'uk': shareinfo.uk,
+            'shareid': shareinfo.share_id,
+            'page': 1,
+            'num': 100,
+            'dir': path,
+            'order': 'time',
+            'desc': 1,
+            '_': int(time()*1000),
+            'bdstoken': '',
+            'channel': 'chunlei',
+            'web': 1,
+            'app_id': shareinfo.fileinfo[0]['app_id'],
+            'clienttype': 0,
+            'logid': ''
+        }
+        resp = self.session.get(url, params=payload, headers=self.headers)
+        # FIXME catch parsing error
+        data = json.loads(resp.text)
+        if data['errno'] == 0:
+            return data['list']
+        else:
+            # FIXME handle exception
+            pass
+
     def _get_js(self, link, secret=None):
         """Get javascript code in html which contains share files info
         :param link: netdisk sharing link(publib or private).
@@ -112,15 +139,63 @@ class Pan(object):
         if 'init' in req.url:
             self.verify_passwd(req.url, secret)
             req = self.session.get(link)
-        util.save_cookies(self.session.cookies)
+        # util.save_cookies(self.session.cookies)
         data = req.text
         js_pattern = re.compile(
             '<script\stype="text/javascript">!function\(\)([^<]+)</script>', re.DOTALL)
         js = re.findall(js_pattern, data)
         return js[0] or None
 
-    def get_dlink(self, link, secret=None, fsid=None):
-        info = ShareInfo()
+    def get_file_info(self, shareinfo, fsid, secret=None):
+        fi = FileInfo()
+
+        extra_params = dict(bdstoken=shareinfo.bdstoken,
+                            sign=shareinfo.sign, timestamp=shareinfo.timestamp)
+
+        post_form = {
+            'encrypt': '0',
+            'product': 'share',
+            'uk': shareinfo.uk,
+            'primaryid': shareinfo.share_id,
+            'fid_list': json.dumps([fsid]),
+        }
+        if self.session.cookies.get('BDCLND'):
+            post_form['extra'] = '{"sekey":"%s"}' % (
+                url_unquote(self.session.cookies['BDCLND'])),
+        logger.debug(post_form, extra={'type': 'form', 'method': 'POST'})
+
+        url = BAIDUPAN_SERVER + 'sharedownload'
+        while True:
+            response = self._request(
+                'POST', url, extra_params=extra_params, post_data=post_form)
+            if not response.ok:
+                raise UnknownError
+            _json = response.json()
+            errno = _json['errno']
+            logger.debug(_json, extra={'type': 'json', 'method': 'POST'})
+
+            if errno == 0:
+                fi.filename = _json['list'][0]['server_filename']
+                fi.path = os.path.dirname(_json['list'][0]['path'])
+                fi.dlink = _json['list'][0]['dlink']
+                fi.parent_path = url_unquote(shareinfo.fileinfo[0]['parent_path'])
+                break
+            elif errno == -20:
+                verify_params = self._handle_captcha(shareinfo.bdstoken)
+                post_form.update(verify_params)
+                response = self._request(
+                    'POST', url, extra_params=extra_params, post_data=post_form)
+                _json = response.json()
+                errno = _json['errno']
+                continue
+            elif errno == 116:
+                raise DownloadError("The share file does not exist")
+            else:
+                raise UnknownError
+        return fi
+
+    def get_file_infos(self, link, secret=None):
+        shareinfo = ShareInfo()
         js = None
         try:
             js = self._get_js(link, secret)
@@ -135,65 +210,27 @@ class Pan(object):
         logger.debug(self.pcsett, extra={
                      'type': 'cookies', 'method': 'SetCookies'})
 
-        if info.match(js):
-            # Fix #17
-            # Need to update fsid if we download it by providing fsid way
-            if fsid:
-                info.fid_list = fsid
+        if not shareinfo.match(js):
+            # FIXME handle exception
+            pass
 
-            extra_params = dict(bdstoken=info.bdstoken,
-                                sign=info.sign, timestamp=info.timestamp)
-            if info.sharepagetype == DLTYPE_MULTIPLE:
-                extra_params['type'] = 'batch'
+        for fi in shareinfo.fileinfo:
+            if fi['isdir'] == 0:
+                self.all_files.append(fi)
+            else:
+                # recursively get files under the specific path
+                self.bd_get_files(shareinfo, fi['path'])
 
-            post_form = {
-                'encrypt': '0',
-                'product': 'share',
-                'uk': info.uk,
-                'primaryid': info.share_id,
-                'fid_list': info.fid_list,
-            }
-            if self.session.cookies.get('BDCLND'):
-                post_form['extra'] = '{"sekey":"%s"}' % (
-                    url_unquote(self.session.cookies['BDCLND'])),
-            logger.debug(post_form, extra={'type': 'form', 'method': 'POST'})
+        # get file details include dlink, path, filename ...
+        return [self.get_file_info(shareinfo, fsid=f['fs_id'], secret=secret) for f in self.all_files]
 
-            url = BAIDUPAN_SERVER + 'sharedownload'
-            while True:
-                response = self._request(
-                    'POST', url, extra_params=extra_params, post_data=post_form)
-                if not response.ok:
-                    raise UnknownError
-                _json = response.json()
-                errno = _json['errno']
-                logger.debug(_json, extra={'type': 'json', 'method': 'POST'})
-                if errno == 0:
-                    if info.sharepagetype == DLTYPE_MULTIPLE:
-                        dlink = _json['dlink']
-                    else:
-                        dlink = _json['list'][0]['dlink']
-                    setattr(info, 'dlink', dlink)
-
-                    # Fix #17
-                    # Need to update filename if we download it by providing
-                    # fsid way
-                    if fsid:
-                        info.filename = _json['list'][0]['server_filename']
-
-                    break
-                elif errno == -20:
-                    verify_params = self._handle_captcha(info.bdstoken)
-                    post_form.update(verify_params)
-                    response = self._request(
-                        'POST', url, extra_params=extra_params, post_data=post_form)
-                    _json = response.json()
-                    errno = _json['errno']
-                    continue
-                elif errno == 116:
-                    raise DownloadError("The share file does not exist")
-                else:
-                    raise UnknownError
-        return info
+    def bd_get_files(self, shareinfo, path):
+        file_list = self.bdlist(shareinfo, path)
+        for f in file_list:
+            if f['isdir'] == 0:
+                self.all_files.append(f)
+            else:
+                self.bd_get_files(shareinfo, f['path'])
 
     def verify_passwd(self, url, secret=None):
         """
@@ -254,6 +291,11 @@ class Pan(object):
             response = None
         return response
 
+class FileInfo(object):
+    def __init__(self):
+        self.filename = None
+        self.path = None
+        self.dlink = None
 
 class ShareInfo(object):
     pattern = re.compile('yunData\.(\w+\s=\s"\w+");')
@@ -265,9 +307,7 @@ class ShareInfo(object):
         self.bdstoken = None
         self.uk = None
         self.bduss = None
-        self.fid_list = None
         self.sign = None
-        self.filename = None
         self.timestamp = None
         self.sharepagetype = None
         self.fileinfo = None
@@ -296,14 +336,10 @@ class ShareInfo(object):
         self.uk = yun_data.get('SHARE_UK').strip('"')
         # self.bduss = yun_data.get('MYBDUSS').strip('"')
         self.share_id = yun_data.get('SHARE_ID').strip('"')
-        self.fid_list = json.dumps([i['fs_id'] for i in self.fileinfo])
         self.sign = yun_data.get('SIGN').strip('"')
         if yun_data.get('MYBDSTOKEN'):
             self.bdstoken = yun_data.get('MYBDSTOKEN').strip('"')
         self.timestamp = yun_data.get('TIMESTAMP').strip('"')
-        self.sharepagetype = yun_data.get('SHAREPAGETYPE').strip('"')
-        if self.sharepagetype == DLTYPE_MULTIPLE:
-            self.filename = os.path.splitext(self.filename)[0] + '-batch.zip'
         # if self.bdstoken:
         #    return True
         return True
