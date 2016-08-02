@@ -19,6 +19,10 @@ import util
 from util import logger
 from command.config import global_config
 
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
+
 BAIDUPAN_SERVER = "http://pan.baidu.com/api/"
 VCODE = 'vcode.jpg'
 
@@ -178,7 +182,7 @@ class Pan(object):
                 fi.filename = _json['list'][0]['server_filename']
                 fi.path = os.path.dirname(_json['list'][0]['path'])
                 fi.dlink = _json['list'][0]['dlink']
-                fi.parent_path = url_unquote(shareinfo.fileinfo[0]['parent_path'])
+                fi.parent_path = url_unquote(shareinfo.fileinfo[0]['parent_path'].encode('utf8'))
                 break
             elif errno == -20:
                 verify_params = self._handle_captcha(shareinfo.bdstoken)
