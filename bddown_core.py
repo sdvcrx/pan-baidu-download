@@ -104,12 +104,12 @@ class Pan(object):
             if isinstance(v, unicode):
                 dictionary[k] = v.encode('utf-8')
 
-    def bdlist(self, shareinfo, path):
+    def bdlist(self, shareinfo, path, page=1):
         url = 'http://pan.baidu.com/share/list'
         payload = {
             'uk': shareinfo.uk,
             'shareid': shareinfo.share_id,
-            'page': 1,
+            'page': page,
             'num': 100,
             'dir': path,
             'order': 'time',
@@ -228,7 +228,14 @@ class Pan(object):
         return [self.get_file_info(shareinfo, fsid=f['fs_id'], secret=secret) for f in self.all_files]
 
     def bd_get_files(self, shareinfo, path):
-        file_list = self.bdlist(shareinfo, path)
+        # Let's do a maximum of 100 pages
+        file_list = []
+        for page in xrange(1, 100):
+            print('Fetching page', page)
+            file_list_new = self.bdlist(shareinfo, path, page)
+            file_list.extend(file_list_new)
+            if len(file_list_new) != 100:
+                break
         for f in file_list:
             if f['isdir'] == 0:
                 self.all_files.append(f)
