@@ -215,7 +215,6 @@ class Pan(object):
                      'type': 'cookies', 'method': 'SetCookies'})
 
         if not shareinfo.match(js):
-            # FIXME handle exception
             pass
 
         for fi in shareinfo.fileinfo:
@@ -302,7 +301,7 @@ class FileInfo(object):
         self.dlink = None
 
 class ShareInfo(object):
-    pattern = re.compile('yunData\.(\w+\s=\s"\w+");')
+    pattern = re.compile('yunData\.setData\((.*?)\);')
     filename_pattern = re.compile('"server_filename":"([^"]+)"', re.DOTALL)
     fileinfo_pattern = re.compile('yunData\.FILEINFO\s=\s(.*);')
 
@@ -324,26 +323,25 @@ class ShareInfo(object):
 
     def match(self, js):
         _filename = re.search(self.filename_pattern, js)
-        _fileinfo = re.search(self.fileinfo_pattern, js)
         if _filename:
             self.filename = _filename.group(1).decode('unicode_escape')
-        if _fileinfo:
-            self.fileinfo = json.loads(
-                _fileinfo.group(1).decode('unicode_escape'))
-        data = re.findall(self.pattern, js)
+        
+        data = re.findall(self.pattern, js)[0]
         if not data:
             return False
-        yun_data = dict([i.split(' = ', 1) for i in data])
+        yun_data = json.loads(data)
+        self.fileinfo = yun_data["file_list"]["list"]
+
         logger.debug(yun_data, extra={'method': 'GET', 'type': 'javascript'})
         # if 'single' not in yun_data.get('SHAREPAGETYPE') or '0' in yun_data.get('LOGINSTATUS'):
         #    return False
-        self.uk = yun_data.get('SHARE_UK').strip('"')
+        self.uk = yun_data.get('uk')
         # self.bduss = yun_data.get('MYBDUSS').strip('"')
-        self.share_id = yun_data.get('SHARE_ID').strip('"')
-        self.sign = yun_data.get('SIGN').strip('"')
-        if yun_data.get('MYBDSTOKEN'):
-            self.bdstoken = yun_data.get('MYBDSTOKEN').strip('"')
-        self.timestamp = yun_data.get('TIMESTAMP').strip('"')
+        self.share_id = yun_data.get('shareid')
+        self.sign = yun_data.get('sign')
+        if yun_data.get('bdstoken'):
+            self.bdstoken = yun_data.get('bdstoken')
+        self.timestamp = yun_data.get('timestamp')
         # if self.bdstoken:
         #    return True
         return True
