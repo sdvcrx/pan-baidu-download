@@ -35,7 +35,7 @@ def select_download(fis):
     counter = 1
     for fi in fis:
         savedir = fi.path.replace(fi.parent_path, '', 1)[1:]
-        print(str(counter) + ') ' + savedir + '/' + fi.filename)
+        print(str(counter) + ')', savedir + "/" + unicode(fi.filename).encode('utf8'))
         counter += 1
 
     input_numbers = raw_input("Please select files to download(e.g., 1,3-5,7):\n")
@@ -59,7 +59,7 @@ def select_download(fis):
     counter = 1
     for sfi in selected_fis:
         savedir = sfi.path.replace(sfi.parent_path, '', 1)[1:]
-        print(str(counter) + ') ' + savedir + '/' + sfi.filename)
+        print(str(counter) + ')', savedir + "/" + unicode(sfi.filename).encode('utf8'))
         counter += 1
 
     return selected_fis
@@ -71,6 +71,7 @@ def download(args):
     parser.add_argument('-L', '--limit', action="store", dest='limit', help="Max download speed limit.")
     parser.add_argument('-D', '--dir', action="store", dest='output_dir', help="Download task to dir.")
     parser.add_argument('-S', '--secret', action="store", dest='secret', help="Retrieval password.", default="")
+    parser.add_argument('-P', '--partial', action="count", help="Partial download.")
     if not args:
         parser.print_help()
         exit(1)
@@ -92,10 +93,11 @@ def download(args):
             pan = Pan()
             fis = pan.get_file_infos(url, secret)
 
-            while True:
-                fis = select_download(fis)
-                if fis is not None:
-                    break
+            if namespace.partial:
+                while True:
+                    fis = select_download(fis)
+                    if fis is not None:
+                        break
 
             for fi in fis:
                 cookies = 'BDUSS={0}'.format(pan.bduss) if pan.bduss else ''
