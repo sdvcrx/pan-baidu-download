@@ -35,7 +35,7 @@ def select_download(fis):
     counter = 1
     for fi in fis:
         savedir = fi.path.replace(fi.parent_path, '', 1)[1:]
-        print(str(counter) + ') ' + savedir + '/' + fi.filename)
+        print(str(counter) + ')', savedir + "/" + unicode(fi.filename).encode('utf8'))
         counter += 1
 
     input_numbers = raw_input("Please select files to download(e.g., 1,3-5,7):\n")
@@ -59,7 +59,7 @@ def select_download(fis):
     counter = 1
     for sfi in selected_fis:
         savedir = sfi.path.replace(sfi.parent_path, '', 1)[1:]
-        print(str(counter) + ') ' + savedir + '/' + sfi.filename)
+        print(str(counter) + ')', savedir + "/" + unicode(sfi.filename).encode('utf8'))
         counter += 1
 
     return selected_fis
