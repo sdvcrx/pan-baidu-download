@@ -166,6 +166,7 @@ def login(args):
         passwd = global_config.password
     if not username and not passwd:
         raise LoginError('请输入你的帐号密码！')
+    cookies = global_config.cookies
     account = BaiduAccount(username, passwd)
     account.login()
     print("Saving session to {}".format(cookies))
