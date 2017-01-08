@@ -13,10 +13,11 @@ from util import logger
 def export(links):
     pan = Pan()
     for link in links:
-        info = pan.get_dlink(link)
-        if not info.filename and not info.dlink:
-            raise GetFilenameError("无法获取下载地址或文件名！")
-        export_single(info.filename, info.dlink)
+        infos = pan.get_file_infos(link)
+        for info in infos:
+            if not info.filename and not info.dlink:
+                raise GetFilenameError("无法获取下载地址或文件名！")
+            export_single(info.filename, info.dlink)
 
 
 def export_single(filename, link):

@@ -113,13 +113,14 @@ def download(args):
             pan = Pan()
             fsid = res.get('fsid')
             newUrl = res.get('url')
-            info = pan.get_dlink(newUrl, secret, fsid)
+            infos = pan.get_file_infos(newUrl, secret, fsid)
             cookies = 'BDUSS={0}'.format(pan.bduss) if pan.bduss else ''
             if cookies and pan.pcsett:
                 cookies += ';pcsett={0}'.format(pan.pcsett)
             if cookies:
                 cookies += '"'
-            download_command(info.filename, info.dlink, cookies=cookies, limit=limit, output_dir=output_dir)
+            for info in infos:
+                download_command(info.filename, info.dlink, cookies=cookies, limit=limit, output_dir=output_dir)
 
         # album
         elif res.get('type') == 2:
