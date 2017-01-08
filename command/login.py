@@ -52,7 +52,7 @@ class BaiduAccount(object):
 
     def _get_baidu_uid(self):
         """Get BAIDUID."""
-        self.session.get('http://www.baidu.com')
+        self.session.get('http://www.baidu.com', headers=self.headers)
         self.baiduid = self.session.cookies.get('BAIDUID')
         log_message = {'type': 'baidu uid', 'method': 'GET'}
         logger.debug(self.baiduid, extra=log_message)
