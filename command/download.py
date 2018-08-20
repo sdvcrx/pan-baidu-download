@@ -64,6 +64,10 @@ def select_download(fis):
 
     return selected_fis
 
+def hasExtension(filename, extension):
+    _, file_ext = os.path.splitext(filename)
+    return file_ext.lower()[1:] == extension.lower()
+
 def download(args):
     limit = global_config.limit
     output_dir = global_config.dir
@@ -72,6 +76,8 @@ def download(args):
     parser.add_argument('-D', '--dir', action="store", dest='output_dir', help="Download task to dir.")
     parser.add_argument('-S', '--secret', action="store", dest='secret', help="Retrieval password.", default="")
     parser.add_argument('-P', '--partial', action="count", help="Partial download.")
+    parser.add_argument('-E', '--extension', action="store", dest='extension', help="Download only specified by the extension. e.g. aw3")
+
     if not args:
         parser.print_help()
         exit(1)
@@ -81,6 +87,8 @@ def download(args):
         limit = namespace.limit
     if namespace.output_dir:
         output_dir = namespace.output_dir
+
+    extension = namespace.extension
 
     # if is wap
     links = [link.replace("wap/link", "share/link") for link in links]
@@ -100,6 +108,9 @@ def download(args):
                         break
 
             for fi in fis:
+                if not hasExtension(fi.filename, extension):
+                    print('{filename} is igonred'.format(filename=fi.filename))                                
+                    continue
                 cookies = 'BDUSS={0}'.format(pan.bduss) if pan.bduss else ''
                 if cookies and pan.pcsett:
                     cookies += ';pcsett={0}'.format(pan.pcsett)
@@ -120,6 +131,9 @@ def download(args):
             if cookies:
                 cookies += '"'
             for info in infos:
+                if not hasExtension(info.filename, extension):
+                    print('{filename} is ignored'.format(filename=info.filename))
+                    continue
                 download_command(info.filename, info.dlink, cookies=cookies, limit=limit, output_dir=output_dir)
 
         # album
