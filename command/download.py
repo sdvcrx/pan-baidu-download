@@ -64,7 +64,7 @@ def select_download(fis):
 
     return selected_fis
 
-def hasExtension(filename, extension):
+def matchExtension(filename, extension):
     _, file_ext = os.path.splitext(filename)
     return file_ext.lower()[1:] == extension.lower()
 
@@ -108,8 +108,8 @@ def download(args):
                         break
 
             for fi in fis:
-                if not hasExtension(fi.filename, extension):
-                    print('{filename} is igonred'.format(filename=fi.filename))                                
+                if extension and not matchExtension(fi.filename, extension):
+                    print('{filename} is igonred'.format(filename=fi.filename))
                     continue
                 cookies = 'BDUSS={0}'.format(pan.bduss) if pan.bduss else ''
                 if cookies and pan.pcsett:
@@ -131,7 +131,7 @@ def download(args):
             if cookies:
                 cookies += '"'
             for info in infos:
-                if not hasExtension(info.filename, extension):
+                if extension and not matchExtension(info.filename, extension):
                     print('{filename} is ignored'.format(filename=info.filename))
                     continue
                 download_command(info.filename, info.dlink, cookies=cookies, limit=limit, output_dir=output_dir)
