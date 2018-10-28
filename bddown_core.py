@@ -39,7 +39,7 @@ class Pan(object):
         self.bdstoken = ''
         self.pcsett = ''
         self.session = requests.Session()
-        # self._load_cookies_from_file()
+        self._load_cookies_from_file()
         self.cookies = self.session.cookies
         self.all_files = []
 
