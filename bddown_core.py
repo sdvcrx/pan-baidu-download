@@ -203,7 +203,7 @@ class Pan(object):
         js = None
         try:
             js = self._get_js(link, secret)
-        except IndexError, e:
+        except IndexError:
             # Retry with new cookies
             js = self._get_js(link, secret)
 
@@ -230,7 +230,7 @@ class Pan(object):
     def bd_get_files(self, shareinfo, path):
         # Let's do a maximum of 100 pages
         file_list = []
-        for page in xrange(1, 100):
+        for page in range(1, 100):
             print('Fetching page', page)
             file_list_new = self.bdlist(shareinfo, path, page)
             file_list.extend(file_list_new)
@@ -255,7 +255,7 @@ class Pan(object):
             pwd = secret
         else:
             # FIXME: Improve translation
-            pwd = raw_input("Please input this sharing password\n")
+            pwd = input("Please input this sharing password\n")
         data = {'pwd': pwd, 'vcode': '', 'vcode_str': ''}
         verify_url = "{0}&t={1}&channel=chunlei&clienttype=0&web=1".format(url.replace('init', 'verify'), int(time()))
         logger.debug(url, extra={'type': 'url', 'method': 'POST'})
@@ -332,7 +332,7 @@ class ShareInfo(object):
         _filename = re.search(self.filename_pattern, js)
         if _filename:
             self.filename = _filename.group(1).decode('unicode_escape')
-        
+
         data = re.findall(self.pattern, js)[0]
         if not data:
             return False
