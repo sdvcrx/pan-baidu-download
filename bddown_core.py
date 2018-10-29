@@ -255,7 +255,7 @@ class Pan(object):
             pwd = secret
         else:
             # FIXME: Improve translation
-            pwd = input("Please input this sharing password\n")
+            pwd = raw_input("Please input this sharing password\n")
         data = {'pwd': pwd, 'vcode': '', 'vcode_str': ''}
         verify_url = "{0}&t={1}&channel=chunlei&clienttype=0&web=1".format(url.replace('init', 'verify'), int(time()))
         logger.debug(url, extra={'type': 'url', 'method': 'POST'})
