@@ -23,7 +23,7 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-BAIDUPAN_SERVER = "http://pan.baidu.com/api/"
+BAIDUPAN_SERVER = "https://pan.baidu.com/api/"
 VCODE = 'vcode.jpg'
 
 

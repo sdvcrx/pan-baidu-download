@@ -21,7 +21,7 @@ def download_command(filename, savedir, link, cookies, limit=None, output_dir=No
           ' --user-agent="{useragent}" --header "Referer:http://pan.baidu.com/disk/home"' \
           ' {cookies} {limit} {dir}' \
           ' "{link}"'.format(savedir=savedir, filename=filename, useragent=pan_ua, link=link,
-                             cookies=convert_none("--header \"Cookies: ", cookies),
+                             cookies=convert_none("--header \"Cookie: ", cookies),
                              limit=convert_none('--max-download-limit=', limit),
                              dir=convert_none('--dir=', output_dir))
     print(cmd)
